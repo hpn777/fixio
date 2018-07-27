@@ -1,0 +1,62 @@
+{
+  "_defaultsLoaded": true,
+  "_from": "git+https://github.com/hpn777/nodefix.git",
+  "_id": "fix@0.1.2",
+  "_inBundle": false,
+  "_integrity": "sha1-J8whiYnHdAj7WinM5pnTU1AiQS0=",
+  "_location": "/fix",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "fix@git+https://github.com/hpn777/nodefix.git",
+    "name": "fix",
+    "escapedName": "fix",
+    "rawSpec": "git+https://github.com/hpn777/nodefix.git",
+    "saveSpec": "git+https://github.com/hpn777/nodefix.git",
+    "fetchSpec": "https://github.com/hpn777/nodefix.git",
+    "gitCommittish": "master"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/hpn777/nodefix.git#4ab3e21a79788488fb32a1c0d85e2914be2e538c",
+  "_spec": "fix@git+https://github.com/hpn777/nodefix.git",
+  "_where": "C:\\Projects\\AQUIS\\appservices",
+  "author": {
+    "name": "Rafal Okninski",
+    "email": "hpn777@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/hpn777/nodefix/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "lodash": "^4.17.10",
+    "moment": "^2.18.1",
+    "node-persist": "^2.1.0",
+    "rxjs": "^6.2.2",
+    "rxjs-compat": "^6.2.2"
+  },
+  "deprecated": false,
+  "description": "FIX Protocol library",
+  "devDependencies": {},
+  "directories": {
+    "handlers": "./handlers"
+  },
+  "homepage": "https://github.com/hpn777/nodefix",
+  "main": "fix",
+  "maintainers": [
+    {
+      "name": "hpn777",
+      "email": "hpn777@gmail.com"
+    }
+  ],
+  "name": "fix",
+  "optionalDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hpn777/nodefix.git"
+  },
+  "version": "0.1.2"
+}
