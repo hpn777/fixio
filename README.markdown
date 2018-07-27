@@ -3,7 +3,7 @@ An implementation of the [FIX protocol (Financial Information Exchange)](http://
 Install
 ====
 
-    npm install nodeio
+    npm install fixio
 
 Test {Server,Client}
 ============
