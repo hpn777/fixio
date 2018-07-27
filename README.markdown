@@ -3,7 +3,7 @@ An implementation of the [FIX protocol (Financial Information Exchange)](http://
 Install
 ====
 
-    npm install nodefix
+    npm install nodeio
 
 Test {Server,Client}
 ============
@@ -28,8 +28,7 @@ API
 
 ###Server:
 ```javascript
-const fix = require('./fix.js');
-const {FIXServer} = require("./FIXServer.js");
+const {FIXServer} = require("fixio");
 
 const server = new FIXServer({resetSeqNumOnReconect: false})
 server.jsonIn$.subscribe((x)=>{if(x.msg.GapFillFlag != 'Y') console.log('jsonIn', x)})
@@ -40,9 +39,9 @@ server.listen(1234, "localhost")
 
 ###Client:
 ```javascript
-const {FIXClient, fixutil} = require("./FIXClient.js");
+const {FIXClient, fixutil} = require("fixio");
 
-const client = new FIXClient("FIX.4.2", "initiator", "acceptor", { resetSeqNumOnReconect: false })
+const client = new FIXClient("FIX.4.4", "initiator", "acceptor", { resetSeqNumOnReconect: false })
 
 client.connect(1234,'localhost');
 client.jsonIn$.subscribe((response)=>{if(response.GapFillFlag != 'Y') console.log('initiator jsonIn',response)})
