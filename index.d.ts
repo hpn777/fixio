@@ -20,6 +20,7 @@ interface FIXServerOptions {
   senderSubID: string
   targetCompID: string
   targetSubID: string
+  isAuthenticFunc(fix: FIXObject, remoteAddress: string): boolean
 }
 
 declare function FIXServer(opt: FIXServerOptions): FIXServer
