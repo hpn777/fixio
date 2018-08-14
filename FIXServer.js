@@ -8,9 +8,10 @@ exports.fixutil = fixutil;
 
 exports.FIXServer = function(opt) {
     var self = this
-    var HOST
-    var PORT
-    
+   
+    this.port = opt.port
+    this.host = opt.host
+
     this.fixSessions = {}
     this.connect$ = new Subject
     this.logon$ = new Subject
@@ -107,10 +108,8 @@ exports.FIXServer = function(opt) {
         }
     })
 
-    this.listen = function(port, host, callback) {
-        PORT = port
-        HOST = host
-        server.listen(port, host, callback);
+    this.listen = callback => {
+        server.listen(this.port, this.host, callback)
     }
 
     this.send = function(targrtId, fix) { 

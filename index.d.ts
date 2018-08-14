@@ -25,7 +25,7 @@ interface FIXServerOptions {
 declare function FIXServer(opt: FIXServerOptions): FIXServer
 
 interface FIXServer {
-  listen(port: number, host: string, callback: () => void)
+  listen(callback: () => void)
   dataIn$: Observable<FIXData>
 }
 
