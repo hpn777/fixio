@@ -7,10 +7,10 @@ var {FIXSession} = require('./handlers/FIXSession')
 exports.fixutil = fixutil;
 
 exports.FIXServer = function(opt) {
-    var self = this
    
     this.port = opt.port
     this.host = opt.host
+    this.options = opt
 
     this.fixSessions = {}
     this.connect$ = new Subject
@@ -26,62 +26,62 @@ exports.FIXServer = function(opt) {
     this.close$ = new Subject
     this.error$ = new Subject
 
-    var server = net.createServer(function(connection) {
+    var server = net.createServer(connection => {
         var sessionHolder = {}
         const frameDecoder = new FrameDecoder()
-        const fixSession = new FIXSession(sessionHolder, true, opt)
+        const fixSession = new FIXSession(sessionHolder, true, this.options)
         var senderId;
 
         sessionHolder.connection = connection
 
         var logon$ = Observable.fromEvent(fixSession, 'logon')
-        logon$.subscribe(self.logon$)
+        logon$.subscribe(this.logon$)
 
         var logoff$ = Observable.fromEvent(fixSession, 'logoff')
-        logoff$.subscribe(self.logoff$)
-        logoff$.subscribe((x)=>{ delete self.fixSessions[senderId] })
+        logoff$.subscribe(this.logoff$)
+        logoff$.subscribe((x)=>{ delete this.fixSessions[senderId] })
 
         var dataOut$ = Observable.fromEvent(fixSession, 'dataOut')
-        dataOut$.subscribe(self.dataOut$)
+        dataOut$.subscribe(this.dataOut$)
 
         var fixOut$ = Observable.fromEvent(fixSession, 'fixOut')
-        fixOut$.subscribe(self.fixOut$)
+        fixOut$.subscribe(this.fixOut$)
 
         var jsonOut$ = fixOut$
             .map((msg) => {
                 return {msg: fixutil.convertToJSON(msg), senderId: senderId}
             })
-        jsonOut$.subscribe(self.jsonOut$)
+        jsonOut$.subscribe(this.jsonOut$)
 
         var end$ = Observable.fromEvent(connection, 'end')
             .map((x)=>{ return senderId })
-        end$.subscribe(self.end$)
-        end$.subscribe((x)=>{ delete self.fixSessions[x] })
+        end$.subscribe(this.end$)
+        end$.subscribe((x)=>{ delete this.fixSessions[x] })
 
         var close$ = Observable.fromEvent(connection, 'close')
             .map((x)=>{ return senderId })
-        close$.subscribe(self.close$)
-        close$.subscribe((x)=>{ delete self.fixSessions[x] })
+        close$.subscribe(this.close$)
+        close$.subscribe((x)=>{ delete this.fixSessions[x] })
 
         var error$ = Observable.fromEvent(connection, 'error')
             .map((x)=>{ return { error: x, senderId: senderId }})
-        error$.subscribe(self.error$)
+        error$.subscribe(this.error$)
         
         var rawIn$ = Observable.fromEvent(connection, 'data')
         var fixIn$ = rawIn$
             .flatMap((raw) => { return frameDecoder.decode(raw)})
-        fixIn$.subscribe(self.fixIn$)
+        fixIn$.subscribe(this.fixIn$)
 
         var jsonIn$ = fixIn$
             .map((msg) => {
                 return {msg: fixutil.convertToJSON(msg), senderId: senderId}
             })
             .catch((ex)=>{
-                self.connection.emit('error', ex)
+                this.connection.emit('error', ex)
                 return Observable.never()}
             )
             .share()
-        jsonIn$.subscribe(self.jsonIn$)
+        jsonIn$.subscribe(this.jsonIn$)
 
         var dataIn$ = fixIn$
             .map((msg) => {
@@ -92,11 +92,11 @@ exports.FIXServer = function(opt) {
                 return Observable.never()}
             )
             .share()
-        dataIn$.subscribe(self.dataIn$)
+        dataIn$.subscribe(this.dataIn$)
 
         logon$.subscribe((x) => {
             senderId = x
-            self.fixSessions[x] = sessionHolder
+            this.fixSessions[x] = sessionHolder
         })
 
         sessionHolder.send = function(fix) { 
