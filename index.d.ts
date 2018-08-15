@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs'
+import { Socket } from 'net'
 
 declare module 'fixio'
 
@@ -25,7 +26,15 @@ interface FIXServerOptions {
 
 declare function FIXServer(opt: FIXServerOptions): FIXServer
 
+interface FIXSessionHolder {
+  connection: Socket
+}
+
 interface FIXServer {
+  options: FIXServerOptions
+  fixSessions: {
+    [senderId: string]: FIXSessionHolder
+  }
   listen(callback: () => void)
   dataIn$: Observable<FIXData>
 }
