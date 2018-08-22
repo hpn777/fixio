@@ -2,23 +2,24 @@ An implementation of the [FIX protocol (Financial Information Exchange)](http://
 
 Install
 ====
-
-    npm install fixio
+```bash
+npm install fixio
+```
 
 Test {Server,Client}
 ============
 
 You can run a test server:
 
-<pre>
+```bash
 node testFIXServer.js
-</pre>
+```
 
 then a test client, too:
 
-<pre>
+```bash
 node testFIXClient.js
-</pre>
+```
 
 Both programs should start communicating with each other.  Wait a few seconds to see
 heart-beat messages fly by.
@@ -26,27 +27,37 @@ heart-beat messages fly by.
 API
 ===
 
-###Server:
-```javascript
-const {FIXServer} = require("fixio");
+## Server:
 
-const server = new FIXServer({resetSeqNumOnReconect: false})
-server.jsonIn$.subscribe((x)=>{if(x.msg.GapFillFlag != 'Y') console.log('jsonIn', x)})
-server.jsonOut$.subscribe((x)=>{if(x.msg.GapFillFlag != 'Y') console.log('jsonOut', x)})
-server.error$.subscribe((x)=>{console.log(x)})
+```javascript
+const { FIXServer } = require("fixio")
+
+const server = new FIXServer()
+server.jsonIn$.subscribe(json => {
+    console.log('jsonIn', json)
+})
+server.jsonOut$.subscribe(json => {
+    console.log('jsonOut', json)
+})
+server.error$.subscribe(e => console.error(e))
 server.listen(1234, "localhost")
 ```
 
-###Client:
+## Client:
+
 ```javascript
-const {FIXClient, fixutil} = require("fixio");
+const { FIXClient, fixutil } = require("fixio")
 
-const client = new FIXClient("FIX.4.4", "initiator", "acceptor", { resetSeqNumOnReconect: false })
+const client = new FIXClient("FIX.4.4", "initiator", "acceptor", {})
 
-client.connect(1234,'localhost');
-client.jsonIn$.subscribe((response)=>{if(response.GapFillFlag != 'Y') console.log('initiator jsonIn',response)})
-client.jsonOut$.subscribe((response)=>{if(response.GapFillFlag != 'Y') console.log('initiator jsonOut',response)})
-client.error$.subscribe((x)=>{console.log(x)})
+client.connect(1234,'localhost')
+client.jsonIn$.subscribe(json => {
+    console.log('initiator jsonIn', json)
+})
+client.jsonOut$.subscribe(json => {
+    console.log('initiator jsonOut', json)
+})
+client.error$.subscribe(e => console.log(e))
 ```
 
 License
