@@ -1,28 +1,6 @@
 {
-  "_defaultsLoaded": true,
-  "_from": "git+https://github.com/hpn777/fixio.git",
-  "_id": "fixio@1.0.1",
-  "_inBundle": false,
-  "_integrity": "sha1-J8whiYnHdAj7WinM5pnTU1AiQS0=",
-  "_location": "/fixio",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "git",
-    "raw": "fix@git+https://github.com/hpn777/fixio.git",
-    "name": "fixio",
-    "escapedName": "fix",
-    "rawSpec": "git+https://github.com/hpn777/fixio.git",
-    "saveSpec": "git+https://github.com/hpn777/fixio.git",
-    "fetchSpec": "https://github.com/hpn777/fixio.git",
-    "gitCommittish": "master"
-  },
-  "_requiredBy": [
-    "#USER",
-    "/"
-  ],
-  "_resolved": "git+https://github.com/hpn777/fixio.git#4ab3e21a79788488fb32a1c0d85e2914be2e538c",
-  "_spec": "fix@git+https://github.com/hpn777/fixio.git",
-  "_where": "C:\\Projects\\AQUIS\\appservices",
+  "name": "fixio",
+  "version": "1.0.1",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
@@ -32,10 +10,10 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "lodash": "^4.17.10",
-    "moment": "^2.18.1",
-    "node-persist": "^2.1.0",
-    "rxjs": "^6.2.2",
+    "lodash": "4.17.10",
+    "moment": "2.18.1",
+    "node-persist": "2.1.0",
+    "rxjs": "6.2.2",
     "rxjs-compat": "^6.2.2"
   },
   "deprecated": false,
@@ -52,11 +30,9 @@
       "email": "hpn777@gmail.com"
     }
   ],
-  "name": "fixio",
   "optionalDependencies": {},
   "repository": {
     "type": "git",
     "url": "git://github.com/hpn777/fixio.git"
-  },
-  "version": "1.0.1"
+  }
 }
