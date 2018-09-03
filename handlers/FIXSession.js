@@ -20,7 +20,8 @@ exports.FIXSession = function(fixClient, isAcceptor, options) {
     var targetCompID = options.targetCompID;
     var targetSubID =  options.targetSubID;
     var senderLocationID = options.senderLocationID;
-    var key = options.senderCompID + '-' + options.targetCompID
+    var logFolder = options.logFolder || './traffic'
+    var key = senderCompID + '-' + targetCompID
 
     var isDuplicateFunc = _.isUndefined(options.isDuplicateFunc)? function (senderId, targetId) {
         var key = senderId + '-' + targetId
@@ -252,10 +253,10 @@ exports.FIXSession = function(fixClient, isAcceptor, options) {
         
     this.logToFile = function(raw){
         if (file === null) {
-            this.logfilename = './traffic/' + senderCompID + '_' + targetCompID + '.log';
+            this.logfilename = logFolder + '/' + key + '.log';
             
             try{
-        	    fs.mkdirSync('./traffic', { 'flags': 'a+' })
+        	    fs.mkdirSync(logFolder, { 'flags': 'a+' })
             }
             catch(ex){}
             
