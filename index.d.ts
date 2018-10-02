@@ -51,7 +51,7 @@ declare function FIXClient(
 interface FIXClient {
   connect(port: number, host: string): void
   send(data: any): void
-  dataIn$: Observable<FIXData>,
+  dataIn$: Observable<FIXObject>,
   connect$: Observable<any>
   error$: Observable<any>
 }
