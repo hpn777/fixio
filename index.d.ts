@@ -28,7 +28,7 @@ declare function FIXServer(opt: FIXServerOptions): FIXServer
 
 interface FIXSessionHolder {
   connection: Socket
-  send(fix: FIXObject)
+  send(fix: FIXObject): void
 }
 
 interface FIXServer {
@@ -36,8 +36,8 @@ interface FIXServer {
   fixSessions: {
     [senderId: string]: FIXSessionHolder
   }
-  listen(callback: () => void)
-  send(targetId: string, fix: any)
+  listen(callback: () => void): void
+  send(targetId: string, fix: any): void
   dataIn$: Observable<FIXData>
 }
 
@@ -51,7 +51,7 @@ declare function FIXClient(
 interface FIXClient {
   connect(port: number, host: string): void
   send(data: any): void
-  dataIn$: Observable<FIXData>,
+  dataIn$: Observable<FIXObject>,
   connect$: Observable<any>
   error$: Observable<any>
 }
