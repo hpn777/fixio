@@ -1,7 +1,7 @@
 {
   "_defaultsLoaded": true,
   "_from": "git+https://github.com/hpn777/fixio.git",
-  "_id": "fixio@1.0.1",
+  "_id": "fixio@1.0.3",
   "_inBundle": false,
   "_integrity": "sha1-J8whiYnHdAj7WinM5pnTU1AiQS0=",
   "_location": "/fixio",
@@ -58,5 +58,5 @@
     "type": "git",
     "url": "git://github.com/hpn777/fixio.git"
   },
-  "version": "1.0.1"
+  "version": "1.0.3"
 }

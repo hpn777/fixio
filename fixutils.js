@@ -33,8 +33,8 @@ var checksum = exports.checksum = function(str){
 }
 
 //TODO change name to converMapToFIX
-var convertRawToFIX = exports.convertRawToFIX = function(map){
-    return convertToFIX(map, map[8], map[52], map[49], map[56], map[34], map[50]);
+var convertMapToFIX = exports.convertMapToFIX = function(map){
+    return convertToFIX(map, map[8], map[52], map[49], map[56], map[34], {senderSubID: map[50]});
 }
 
 var convertToFIX = exports.convertToFIX = function(msgraw, fixVersion, timeStamp, senderCompID, targetCompID, outgoingSeqNum, options){
