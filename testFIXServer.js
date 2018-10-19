@@ -1,9 +1,17 @@
-const fix = require('./fix.js');
-const {FIXServer} = require("./FIXServer.js");
+const { FIXServer } = require('./FIXServer')
 
-const server = new FIXServer({resetSeqNumOnReconect: false})
-server.jsonIn$.subscribe((x)=>{if(x.msg.GapFillFlag != 'Y') console.log('jsonIn', x)})
-server.jsonOut$.subscribe((x)=>{if(x.msg.GapFillFlag != 'Y') console.log('jsonOut', x)})
-server.error$.subscribe((x)=>{console.log(x)})
-server.listen(1234, "localhost")
+const serverOptions = {
+  port: 1234,
+  host: 'localhost'
+}
+
+const server = new FIXServer(serverOptions)
+server.jsonIn$.subscribe(json => {
+    console.log('jsonIn', json)
+})
+server.jsonOut$.subscribe(json => {
+    console.log('jsonOut', json)
+})
+server.error$.subscribe(e => console.error(e))
+server.listen()
 

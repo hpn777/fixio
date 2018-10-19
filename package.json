@@ -32,10 +32,10 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "lodash": "^4.17.10",
-    "moment": "^2.18.1",
-    "node-persist": "^2.1.0",
-    "rxjs": "^6.2.2",
+    "lodash": "4.17.10",
+    "moment": "2.22.2",
+    "node-persist": "2.1.0",
+    "rxjs": "6.2.2",
     "rxjs-compat": "^6.2.2"
   },
   "deprecated": false,
@@ -52,7 +52,6 @@
       "email": "hpn777@gmail.com"
     }
   ],
-  "name": "fixio",
   "optionalDependencies": {},
   "repository": {
     "type": "git",

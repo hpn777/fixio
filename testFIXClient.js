@@ -1,13 +1,13 @@
-const {FIXClient, fixutil} = require("./FIXClient.js");
+const { FIXClient } = require('./FIXClient')
 
-const client = new FIXClient("FIX.4.2", "initiator", "acceptor", { resetSeqNumOnReconect: false })
+const client = new FIXClient("FIX.4.4", "initiator", "acceptor", {})
 
-client.connect(1234,'localhost');
-client.jsonIn$.subscribe((response)=>{if(response.GapFillFlag != 'Y') console.log('initiator jsonIn',response)})
-client.jsonOut$.subscribe((response)=>{if(response.GapFillFlag != 'Y') console.log('initiator jsonOut',response)})
-client.error$.subscribe((x)=>{console.log(x)})
+client.jsonIn$.subscribe(json => {
+    console.log('initiator jsonIn', json)
+})
+client.jsonOut$.subscribe(json => {
+    console.log('initiator jsonOut', json)
+})
+client.error$.subscribe(e => console.log(e))
+client.connect(1234, 'localhost')
 
-process.on('SIGINT', function() {
-    client.logoff()
-    setTimeout(() => {process.exit() }, 1000)
-});

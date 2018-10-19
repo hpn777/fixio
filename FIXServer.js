@@ -112,16 +112,18 @@ exports.FIXServer = function(opt) {
         server.listen(this.port, this.host, callback)
     }
 
-    this.send = function(targrtId, fix) { 
-        const sessionHolder = server.fixSessions[targrtId]
-        if(sessionHolder)
+    this.send = function(targetId, fix) { 
+        const sessionHolder = this.fixSessions[targetId]
+        if (sessionHolder) {
             sessionHolder.send(fix)
+        }
     }
 
-    this.resetFIXSession = function(targrtId){
-        const sessionHolder = server.fixSessions[targrtId]
-        if(sessionHolder)
+    this.resetFIXSession = function(targetId){
+        const sessionHolder = this.fixSessions[targetId]
+        if (sessionHolder) {
             sessionHolder.resetFIXSession()
+        }
     }
 
     return this
