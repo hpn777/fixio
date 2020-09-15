@@ -9,7 +9,7 @@
     "url": "https://github.com/hpn777/fixio/issues"
   },
   "dependencies": {
-    "lodash": "4.17.10",
+    "lodash": "4.17.19",
     "moment": "2.22.2",
     "node-persist": "2.1.0",
     "rxjs": "6.2.2",
