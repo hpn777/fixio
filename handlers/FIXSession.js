@@ -249,7 +249,7 @@ exports.FIXSession = function (fixClient, isAcceptor, options) {
     this.logon = function (logonmsg) {
         logonmsg = !logonmsg ? {
             '35': 'A',
-            '90': '0',
+            // '90': '0',
             '108': '10'
         } : logonmsg;
 
