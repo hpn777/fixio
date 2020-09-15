@@ -82,7 +82,7 @@ var convertToFIX = exports.convertToFIX = function (msgraw, fixVersion, timeStam
     headermsgarr.push('52=' + timeStamp, SOHCHAR);
 
     _.each(msg, (item, tag) => {
-        if (headerFields[tag] === true) {
+        if (headerFields[tag] !== true) {
             if (Array.isArray(item)) {
                 bodymsgarr.push(tag, '=', item.length, SOHCHAR)
                 item.forEach((group) => {
