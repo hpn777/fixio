@@ -9,11 +9,8 @@ var re = new RegExp(SOHCHAR, "g")
 const ENDOFTAG8 = 10
 const STARTOFTAG9VAL = ENDOFTAG8 + 2;
 const SIZEOFTAG10 = 8
-const ENDOFMSGSTR = SOHCHAR + '10='
-//const indexOfTag10SOHCHAR = 7
 exports.FrameDecoder = function($){
     var buffer = '';
-    var self = this;
 
     this.decode = (data) => {
         buffer = buffer + data.toString();
@@ -30,11 +27,9 @@ exports.FrameDecoder = function($){
             var idxOfEndOfTag9 = Number(buffer.substring(ENDOFTAG8).indexOf(SOHCHAR)) + ENDOFTAG8;
             var bodyLength = Number(buffer.substring(STARTOFTAG9VAL, idxOfEndOfTag9));
 
-            var idxOfEndOfTag10 = buffer.indexOf(ENDOFMSGSTR)
             var msgLength = bodyLength + idxOfEndOfTag9 + SIZEOFTAG10
 
             if(!isNaN(msgLength) && buffer.length >= msgLength){
-                //var msgLength = idxOfEndOfTag10 + SIZEOFTAG10;
                 var msg = buffer.substring(0, msgLength);
 		
                 if (msgLength === buffer.length) {
