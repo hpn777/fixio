@@ -1,4 +1,4 @@
-exports.resolveKey = (key) => { return keyvals[key] || key }
+exports.resolveKey = (key) => keyvals[key] || key
 
 var keyvals = exports.keyvals = {
 "1":"Account", "Account":"1",

@@ -114,29 +114,34 @@ var convertToFIX = exports.convertToFIX = function (msgraw, fixVersion, timeStam
     return outmsg;
 }
 
-var convertToKeyvals = function (msg) {
+var convertToKeyvals = exports.convertToKeyvals = function (msg) {
     var keyvals = []
     var cursor = 0
 
     while (cursor < msg.length) {
-        var nextPipe
         var i = cursor
-
+        var attrLength = 0
+        var key, value;
         while (true) {
-            if (msg[i] === SOHCHAR) {
-                nextPipe = i
+            if(msg[i] === '='){
+                key = msg.substr(cursor, attrLength)
+                attrLength = 0
+                cursor = i + 1
+            }
+            else if (msg[i] === SOHCHAR) {
+                value = msg.substr(cursor, attrLength-1)
+                cursor = i + 1
                 break;
             }
+            attrLength++
             i++
         }
 
-        var pair = msg.slice(cursor, nextPipe).split('=')
-        keyvals.push(pair)
-        cursor = nextPipe + 1
+        keyvals.push([key, value])
 
-        if (pair[0] === '212') {
+        if (key === '212') {
             var xmlPair = ['213']
-            var xmlLength = Number(pair[1]) + 5
+            var xmlLength = Number(value) + 5
             xmlPair[1] = msg.slice(cursor + 4, cursor + xmlLength - 1)
             keyvals.push(xmlPair)
             cursor += xmlLength
@@ -181,24 +186,20 @@ var convertToJSON = exports.convertToJSON = function (msg) {
 
     var i = 0;
     while (i < keyvals.length) {
-        var pair = keyvals[i]
-        if (pair.length === 2) {
-            var repeatinGroup = fixRepeatingGroups[pair[0]]
-            if (!repeatinGroup) {
-                fix[resolveKey(pair[0])] = pair[1]
-                i++
-            } else {
-                var nr = Number(pair[1])
-                if (nr) {
-                    var response = repeatingGroupToJSON(repeatinGroup, nr, keyvals.slice(i + 1))
-                    fix[resolveKey(pair[0])] = response.repeatingGroup
-                    i += (1 + response.length)
-                } else {
-                    throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid')
-                }
-            }
-        } else
+        var [key, value] = keyvals[i]
+        if (fixRepeatingGroups[key] === undefined) {
+            fix[resolveKey(key)] = value
             i++
+        } else {
+            var nr = Number(value)
+            if (nr) {
+                var response = repeatingGroupToJSON(fixRepeatingGroups[key], nr, keyvals.slice(i + 1))
+                fix[resolveKey(key)] = response.repeatingGroup
+                i += (1 + response.length)
+            } else {
+                throw new Error(`Repeating Group: "${key} = ${value}" is invalid`)
+            }
+        }
     }
 
     return fix;
