@@ -54,12 +54,12 @@ exports.FIXServer = function(opt) {
         jsonOut$.subscribe(this.jsonOut$)
 
         var end$ = Observable.fromEvent(connection, 'end')
-            .map((x)=>{ return senderId })
+            .map(x => senderId )
         end$.subscribe(this.end$)
         end$.subscribe((x)=>{ delete this.fixSessions[x] })
 
         var close$ = Observable.fromEvent(connection, 'close')
-            .map((x)=>{ return senderId })
+            .map( x => senderId )
         close$.subscribe(this.close$)
         close$.subscribe((x)=>{ delete this.fixSessions[x] })
 
@@ -69,14 +69,14 @@ exports.FIXServer = function(opt) {
         
         var rawIn$ = Observable.fromEvent(connection, 'data')
         var fixIn$ = rawIn$
-            .flatMap((raw) => { return frameDecoder.decode(raw)})
+            .flatMap(x => frameDecoder.decode(x))
         fixIn$.subscribe(this.fixIn$)
 
         var jsonIn$ = fixIn$
             .map((msg) => {
                 return {msg: fixutil.convertToJSON(msg), senderId: senderId}
             })
-            .catch((ex)=>{
+            .catch( ex => {
                 this.connection.emit('error', ex)
                 return Observable.never()}
             )
@@ -84,13 +84,13 @@ exports.FIXServer = function(opt) {
         jsonIn$.subscribe(this.jsonIn$)
 
         var dataIn$ = fixIn$
-            .map((msg) => {
+            .map( msg => {
                 return {msg: fixSession.decode(msg), senderId: senderId}
             })
-            .catch((ex)=>{
+            .catch(ex => {
                 connection.emit('error', ex)
-                return Observable.never()}
-            )
+                return Observable.never()
+            })
             .share()
         dataIn$.subscribe(this.dataIn$)
 

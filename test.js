@@ -9,13 +9,13 @@ var i = 1
 
 console.time('perf')
 
-for (k = 0; k < 1000000; k++) {
+for (k = 0; k < 10000; k++) {
     frameDecoder
         .decode(testData)
         .map(x => fixutils.convertToJSON(x))
         .subscribe(x => {
             // console.log(x)
-            // fixutils.convertMapToFIX(x)
+            fixutils.convertToFIX(x)
             i++
         })
 }
