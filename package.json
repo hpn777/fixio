@@ -21,7 +21,8 @@
     "handlers": "./handlers"
   },
   "homepage": "https://github.com/hpn777/fixio",
-  "main": "fix",
+  "main": "./fix.js",
+  "types": "./fix.d.ts",
   "maintainers": [
     {
       "name": "Rafal Okninski",
