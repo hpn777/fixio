@@ -5,3 +5,5 @@ traffic
 **/*.js
 **/*.d.ts
 **/*.map
+.vscode/
+**/*.tgz

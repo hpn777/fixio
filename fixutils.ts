@@ -1,4 +1,3 @@
-import { utc } from 'moment'
 import { fixRepeatingGroups } from './resources/fixSchema'
 import { resolveKey, keyvals } from './resources/fixtagnums'
 
@@ -20,8 +19,23 @@ export function setSOHCHAR(char: string): void {
     SOHCHAR = char
 }
 
-export function getUTCTimeStamp() {
-    return utc().format('YYYYMMDD-HH:mm:ss.SSS');
+/**
+ * @returns `YYYYMMDD-HH:mm:ss.SSS`
+ */
+export function getUTCTimeStamp(date: Date = new Date()) {
+    return [
+        `${date.getUTCFullYear()}`.padStart(4,'0'),
+        `${date.getUTCMonth()+1}`.padStart(2,'0'),
+        `${date.getUTCDate()}`.padStart(2,'0'),
+        '-',
+        `${date.getUTCHours()}`.padStart(2,'0'),
+        ':',
+        `${date.getUTCMinutes()}`.padStart(2,'0'),
+        ':',
+        `${date.getUTCSeconds()}`.padStart(2,'0'),
+        '.',
+        `${date.getUTCMilliseconds()}`.padStart(3,'0'),
+    ].join('')
 }
 
 export function checksum(str: string) {
@@ -45,7 +59,7 @@ export function checksum(str: string) {
 }
 
 export function convertToFIX(
-    msgraw: Readonly<Record<keyvals, unknown>>,
+    msgraw: Readonly<Partial<Record<keyvals, unknown>>>,
     fixVersion: unknown,
     timeStamp: unknown,
     senderCompID: unknown,
@@ -58,14 +72,14 @@ export function convertToFIX(
     },
 ): string {
     //defensive copy
-    const msg: Record<keyvals, unknown> = { ...msgraw };
+    const msg: Record<keyvals, unknown> = { ...msgraw } as any;
 
     delete msg[keyvals.BodyLength]; //bodylength
     delete msg[keyvals.CheckSum]; //checksum
 
     const headermsgarr: Array<unknown> = [];
     const bodymsgarr: Array<unknown> = [];
-    //var trailermsgarr = [];
+    //const trailermsgarr = [];
 
     headermsgarr.push('35=' + msg['35'], SOHCHAR);
 
@@ -104,10 +118,10 @@ export function convertToFIX(
     }
 
     const headermsg = headermsgarr.join('');
-    //var trailermsg = trailermsgarr.join('');
+    //const trailermsg = trailermsgarr.join('');
     const bodymsg = bodymsgarr.join('');
 
-    var outmsgarr: Array<unknown> = [];
+    const outmsgarr: Array<unknown> = [];
     outmsgarr.push('8=', msg['8'] || fixVersion, SOHCHAR);
     outmsgarr.push('9=', (headermsg.length + bodymsg.length), SOHCHAR);
     outmsgarr.push(headermsg);
