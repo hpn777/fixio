@@ -1,7 +1,7 @@
 import { mkdirSync, createWriteStream, unlinkSync, createReadStream, WriteStream } from 'fs'
 import { createInterface as createReadlineInterface } from 'readline'
 // @ts-ignore no type defs for v2
-import * as storage from 'node-persist'
+import storage from 'node-persist'
 import { EventEmitter } from 'events'
 import throttle from 'lodash/throttle'
 import { convertToMap, convertToFIX, getUTCTimeStamp } from '../fixutils'
@@ -278,7 +278,7 @@ export class FIXSession extends EventEmitter {
         if (this.#resetSeqNumOnReconect) {
             this.#session = {
                 'incomingSeqNum': 1,
-                'outgoingSeqNum': 1
+                'outgoingSeqNum': 1,
             }
         } else {
             this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)

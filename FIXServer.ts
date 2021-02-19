@@ -33,7 +33,7 @@ export class FIXServer {
     public readonly close$ = new Subject<keyof FIXServer['fixSessions']>()
     public readonly error$ = new Subject<{ readonly error: unknown, readonly senderId: keyof FIXServer['fixSessions'] }>()
 
-    #server = createServer((connection) => {
+    public readonly server = createServer((connection) => {
         let fixSession: FIXSession
         const sessionHolder: SessionHolder = {
             connection,
@@ -111,8 +111,8 @@ export class FIXServer {
         ).subscribe(this.dataIn$)
     })
 
-    public readonly listen = (callback: () => void) => {
-        this.#server.listen(this.port, this.host, callback)
+    public readonly listen = (callback?: () => void) => {
+        this.server.listen(this.port, this.host, callback)
     }
 
     public readonly send = (targetId: keyof FIXServer['fixSessions'], ...args: Parameters<FIXSession['send']>) => {
