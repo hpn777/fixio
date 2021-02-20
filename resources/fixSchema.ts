@@ -1,6 +1,6 @@
-exports.fixRepeatingGroups = {
-    '534': ['41','84','535','536'],
-    '436': ['447','448','452','2378'],//MIFID II fields
+export const fixRepeatingGroups: Partial<Readonly<Record<string, ReadonlyArray<`${number}`>>>> = {
+    '534': ['41', '84', '535', '536'],
+    '436': ['447', '448', '452', '2378'],//MIFID II fields
     '457': ['457 ', '459'],
     '9070': ['9071', '9072', '9073'],
     '33': ['58'],//fields to carry text
