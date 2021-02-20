@@ -6,14 +6,23 @@ Install
 npm install fixio
 ```
 
-Test
+Test {Server,Client}
 ============
 
-You can run tests by:
+You can run a test server:
 
 ```bash
-npm test
+node testFIXServer.js
 ```
+
+then a test client, too:
+
+```bash
+node testFIXClient.js
+```
+
+Both programs should start communicating with each other.  Wait a few seconds to see
+heart-beat messages fly by.
 
 API
 ===

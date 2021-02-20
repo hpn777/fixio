@@ -1,23 +1,19 @@
 {
-  "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
   "version": "1.0.5",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
   },
-  "scripts": {
-    "build": "tsc",
-    "test": "jest"
-  },
   "bugs": {
     "url": "https://github.com/hpn777/fixio/issues"
   },
   "dependencies": {
-    "lodash": "^4.0.0",
-    "node-persist": "~2.1.0",
-    "rxjs": "^6.2.0",
-    "tslib": "^2.1.0"
+    "lodash": "4.17.10",
+    "moment": "2.22.2",
+    "node-persist": "2.1.0",
+    "rxjs": "6.2.2",
+    "rxjs-compat": "^6.2.2"
   },
   "deprecated": false,
   "description": "FIX Protocol library",
@@ -25,8 +21,7 @@
     "handlers": "./handlers"
   },
   "homepage": "https://github.com/hpn777/fixio",
-  "main": "./fix.js",
-  "types": "./fix.d.ts",
+  "main": "fix",
   "maintainers": [
     {
       "name": "Rafal Okninski",
@@ -36,30 +31,5 @@
   "repository": {
     "type": "git",
     "url": "git://github.com/hpn777/fixio.git"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "json",
-      "jsx",
-      "node"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.ts?(x)",
-      "**/?(*.)+(spec|test).ts?(x)"
-    ]
-  },
-  "devDependencies": {
-    "@tsconfig/node14": "^1.0.0",
-    "@types/jest": "^26.0.0",
-    "@types/lodash": "^4.0.0",
-    "@types/node": "^14.0.0",
-    "jest": "^26.0.0",
-    "ts-jest": "^26.0.0",
-    "typescript": "~4.2.0-beta || ~4.2.0-rc || ~4.2.0"
   }
 }
