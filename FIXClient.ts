@@ -1,5 +1,5 @@
 import { Subject, Observable, fromEvent, NEVER } from 'rxjs'
-import { catchError, flatMap, map, share } from 'rxjs/operators'
+import { catchError, mergeMap, map, share } from 'rxjs/operators'
 import { Socket, TcpSocketConnectOpts } from 'net'
 import { TLSSocket } from 'tls'
 import { convertToJSON } from './fixutils'
@@ -21,18 +21,18 @@ export class FIXClient implements FIXConnection {
 
     #ssl: FIXClientOptions['ssl']
 
-    public readonly connect$ = new Subject<unknown>()
-    public readonly logon$ = new Subject<unknown>()
-    public readonly logoff$ = new Subject<unknown>()
-    public readonly fixIn$ = new Subject<unknown>()
-    public readonly dataIn$ = new Subject<unknown>()
-    public readonly jsonIn$ = new Subject<unknown>()
-    public readonly fixOut$ = new Subject<unknown>()
-    public readonly dataOut$ = new Subject<unknown>()
-    public readonly jsonOut$ = new Subject<unknown>()
-    public readonly end$ = new Subject<unknown>()
-    public readonly close$ = new Subject<unknown>()
-    public readonly error$ = new Subject<unknown>()
+    public readonly connect$ = new Subject
+    public readonly logon$ = new Subject
+    public readonly logoff$ = new Subject
+    public readonly fixIn$ = new Subject<string>()
+    public readonly dataIn$ = new Subject<ReturnType<FIXSession['decode']>>()
+    public readonly jsonIn$ = new Subject<ReturnType<typeof convertToJSON>>()
+    public readonly fixOut$ = new Subject<string>()
+    public readonly dataOut$ = new Subject<ReturnType<FIXSession['decode']>>()
+    public readonly jsonOut$ = new Subject<ReturnType<typeof convertToJSON>>()
+    public readonly end$ = new Subject
+    public readonly close$ = new Subject
+    public readonly error$ = new Subject
 
     public connection: Socket | TLSSocket | undefined
 
@@ -63,7 +63,7 @@ export class FIXClient implements FIXConnection {
         this.#host = host
         this.#port = port
 
-        // @ts-ignore TLSSocket expects a socket instance, but it was not provided in the previous version anyways
+        // @ts-ignore TLSSocket expects a socket instance, but it was not provided in the previous version
         const socket = this.#ssl ? new TLSSocket() : new Socket()
         this.connection = socket.connect({ port, host }, connectionListener)
 
@@ -72,9 +72,9 @@ export class FIXClient implements FIXConnection {
 
             fromEvent(this.#fixSession, 'logoff').subscribe(this.logoff$)
 
-            fromEvent(this.#fixSession, 'dataOut').subscribe(this.dataOut$)
+            fromEvent<any>(this.#fixSession, 'dataOut').subscribe(this.dataOut$)
 
-            const fixOut$ = fromEvent(this.#fixSession, 'fixOut').pipe(share())
+            const fixOut$ = fromEvent<string>(this.#fixSession, 'fixOut').pipe(share())
             fixOut$.subscribe(this.fixOut$)
 
             fixOut$.pipe(map(convertToJSON)).subscribe(this.jsonOut$)
@@ -88,8 +88,8 @@ export class FIXClient implements FIXConnection {
 
         fromEvent(this.connection, 'close').subscribe(this.close$)
 
-        const fixIn$: Observable<string> = fromEvent(this.connection, 'data').pipe(
-            flatMap((raw: Buffer) => this.#frameDecoder.decode(raw)),
+        const fixIn$ = fromEvent<any>(this.connection, 'data').pipe(
+            mergeMap((raw: Buffer) => this.#frameDecoder.decode(raw)),
             catchError((ex) => {
                 this.connection?.emit('error', ex)
                 return NEVER

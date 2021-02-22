@@ -56,6 +56,14 @@ client.jsonOut$.subscribe(json => {
 client.error$.subscribe(e => console.log(e))
 ```
 
+Containerized NPM
+=================
+
+You can use a containerized npm run inside a docker container by using the `npm` script:
+``` sh
+./npm install
+```
+
 License
 =======
 Copyright (C) 2018 by Rafal Okninski

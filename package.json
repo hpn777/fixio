@@ -21,9 +21,6 @@
   },
   "deprecated": false,
   "description": "FIX Protocol library",
-  "directories": {
-    "handlers": "./handlers"
-  },
   "homepage": "https://github.com/hpn777/fixio",
   "main": "./fix.js",
   "types": "./fix.d.ts",

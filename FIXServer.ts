@@ -1,5 +1,5 @@
 import { Observable, Subject, fromEvent, NEVER } from 'rxjs'
-import { tap, map, share, flatMap, catchError } from 'rxjs/operators'
+import { tap, map, share, flatMap, catchError, mergeMap } from 'rxjs/operators'
 import { TcpNetConnectOpts, createServer } from 'net'
 import { convertToJSON } from './fixutils'
 import { FrameDecoder } from './handlers/FrameDecoder'
@@ -86,8 +86,8 @@ export class FIXServer {
             map((error) => ({ error, senderId })),
         ).subscribe(this.error$)
 
-        const fixIn$: Observable<string> = fromEvent(connection, 'data').pipe(
-            flatMap((raw: Buffer) => frameDecoder.decode(raw)),
+        const fixIn$ = fromEvent<any>(connection, 'data').pipe(
+            mergeMap((raw: Buffer) => frameDecoder.decode(raw)),
             share(),
         )
         fixIn$.subscribe(this.fixIn$)
