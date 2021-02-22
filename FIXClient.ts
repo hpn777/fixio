@@ -1,4 +1,4 @@
-import { Subject, Observable, fromEvent, NEVER } from 'rxjs'
+import { Subject, fromEvent, NEVER } from 'rxjs'
 import { catchError, mergeMap, map, share } from 'rxjs/operators'
 import { Socket, TcpSocketConnectOpts } from 'net'
 import { TLSSocket } from 'tls'

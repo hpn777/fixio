@@ -1,5 +1,5 @@
-import { Observable, Subject, fromEvent, NEVER } from 'rxjs'
-import { tap, map, share, flatMap, catchError, mergeMap } from 'rxjs/operators'
+import { Subject, fromEvent, NEVER } from 'rxjs'
+import { tap, map, share, catchError, mergeMap } from 'rxjs/operators'
 import { TcpNetConnectOpts, createServer } from 'net'
 import { convertToJSON } from './fixutils'
 import { FrameDecoder } from './handlers/FrameDecoder'
