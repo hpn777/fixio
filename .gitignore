@@ -1,3 +1,9 @@
 .node-persist
-node_modules
+/node_modules
 traffic
+/package-lock.json
+**/*.js
+**/*.d.ts
+**/*.map
+.vscode/
+**/*.tgz

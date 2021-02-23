@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+docker run \
+-a stdin \
+-a stdout \
+--name "fixio" \
+--rm \
+-it \
+-v "$(pwd)":/home/node \
+-w "/home/node" \
+node:14-alpine npm "$@"

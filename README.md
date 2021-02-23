@@ -6,23 +6,14 @@ Install
 npm install fixio
 ```
 
-Test {Server,Client}
+Test
 ============
 
-You can run a test server:
+You can run tests by:
 
 ```bash
-node testFIXServer.js
+npm test
 ```
-
-then a test client, too:
-
-```bash
-node testFIXClient.js
-```
-
-Both programs should start communicating with each other.  Wait a few seconds to see
-heart-beat messages fly by.
 
 API
 ===
@@ -63,6 +54,14 @@ client.jsonOut$.subscribe(json => {
     console.log('initiator jsonOut', json)
 })
 client.error$.subscribe(e => console.log(e))
+```
+
+Containerized NPM
+=================
+
+You can use a containerized npm run inside a docker container by using the `npm` script:
+``` sh
+./npm install
 ```
 
 License
