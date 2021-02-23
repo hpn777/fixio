@@ -24,17 +24,17 @@ export function setSOHCHAR(char: string): void {
  */
 export function getUTCTimeStamp(date: Date = new Date()) {
     return [
-        `${date.getUTCFullYear()}`.padStart(4,'0'),
-        `${date.getUTCMonth()+1}`.padStart(2,'0'),
-        `${date.getUTCDate()}`.padStart(2,'0'),
+        `${date.getUTCFullYear()}`.padStart(4, '0'),
+        `${date.getUTCMonth() + 1}`.padStart(2, '0'),
+        `${date.getUTCDate()}`.padStart(2, '0'),
         '-',
-        `${date.getUTCHours()}`.padStart(2,'0'),
+        `${date.getUTCHours()}`.padStart(2, '0'),
         ':',
-        `${date.getUTCMinutes()}`.padStart(2,'0'),
+        `${date.getUTCMinutes()}`.padStart(2, '0'),
         ':',
-        `${date.getUTCSeconds()}`.padStart(2,'0'),
+        `${date.getUTCSeconds()}`.padStart(2, '0'),
         '.',
-        `${date.getUTCMilliseconds()}`.padStart(3,'0'),
+        `${date.getUTCMilliseconds()}`.padStart(3, '0'),
     ].join('')
 }
 
@@ -56,6 +56,20 @@ export function checksum(str: string) {
     }
 
     return checksumstr;
+}
+
+export function convertMapToFIX(map: Readonly<Partial<Record<keyvals, unknown>>>) {
+    return convertToFIX(
+        map,
+        map[keyvals.BeginString],
+        map[keyvals.SendingTime],
+        map[keyvals.SenderCompID],
+        map[keyvals.TargetCompID],
+        map[keyvals.MsgSeqNum],
+        {
+            senderSubID: map[keyvals.SenderSubID],
+        },
+    );
 }
 
 export function convertToFIX(
