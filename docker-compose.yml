@@ -1,0 +1,13 @@
+version: "3.4"
+services:
+  exec:
+    image: node:latest
+    volumes:
+      - "./:/home"
+    working_dir: "/home"
+    command: ["bash", "-c", "${FILE}"]
+    networks:
+      - fixio
+
+networks:
+  fixio:

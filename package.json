@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "watch": "tsc -w",
     "test": "jest"
   },
   "bugs": {
@@ -22,8 +23,8 @@
   "deprecated": false,
   "description": "FIX Protocol library",
   "homepage": "https://github.com/hpn777/fixio",
-  "main": "./fix.js",
-  "types": "./fix.d.ts",
+  "main": "./dist/fix.js",
+  "types": "./dist/fix.d.ts",
   "maintainers": [
     {
       "name": "Rafal Okninski",
