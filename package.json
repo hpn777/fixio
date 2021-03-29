@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
-  "version": "1.0.5",
+  "version": "1.1.6",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
@@ -15,7 +15,6 @@
     "url": "https://github.com/hpn777/fixio/issues"
   },
   "dependencies": {
-    "lodash": "^4.0.0",
     "node-persist": "~2.1.0",
     "rxjs": "^6.2.0",
     "tslib": "^2.1.0"
@@ -54,7 +53,6 @@
   "devDependencies": {
     "@tsconfig/node14": "^1.0.0",
     "@types/jest": "^26.0.0",
-    "@types/lodash": "^4.0.0",
     "@types/node": "^14.0.0",
     "jest": "^26.0.0",
     "ts-jest": "^26.0.0",

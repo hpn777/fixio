@@ -11,6 +11,7 @@ const headerFields: Partial<Readonly<Record<keyvals, boolean>>> = {
     [keyvals.SenderSubID]: true,
     [keyvals.TargetCompID]: true,
     [keyvals.MsgSeqNum]: true,
+    [keyvals.ApplVerID]: true,
 }
 
 export let SOHCHAR = String.fromCharCode(1);
@@ -80,9 +81,10 @@ export function convertToFIX(
     targetCompID: unknown,
     outgoingSeqNum: unknown,
     options: {
-        readonly senderSubID?: unknown;
-        readonly targetSubID?: unknown;
-        readonly senderLocationID?: unknown;
+        readonly senderSubID?: unknown
+        readonly targetSubID?: unknown
+        readonly senderLocationID?: unknown
+        readonly appVerID?: unknown
     },
 ): string {
     //defensive copy
@@ -99,11 +101,15 @@ export function convertToFIX(
 
     headermsgarr.push('49=' + (msg['49'] || senderCompID), SOHCHAR);
 
+    headermsgarr.push('56=' + (msg['56'] || targetCompID), SOHCHAR);
+
+    if (options.appVerID) {
+        headermsgarr.push('1128=' + (msg['1128'] || options.appVerID), SOHCHAR);
+    }
+
     if (options.senderSubID) {
         headermsgarr.push('50=' + (msg['50'] || options.senderSubID), SOHCHAR);
     }
-
-    headermsgarr.push('56=' + (msg['56'] || targetCompID), SOHCHAR);
 
     if (options.targetSubID) {
         headermsgarr.push('57=' + (msg['57'] || options.targetSubID), SOHCHAR);

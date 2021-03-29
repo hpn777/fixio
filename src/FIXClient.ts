@@ -66,7 +66,6 @@ export class FIXClient implements FIXConnection {
         // @ts-ignore TLSSocket expects a socket instance, but it was not provided in the previous version
         const socket = this.#ssl ? new TLSSocket() : new Socket()
         this.connection = socket.connect({ port, host }, connectionListener)
-
         if (!isReconnect) {
             fromEvent(this.#fixSession, 'logon').subscribe(this.logon$)
 

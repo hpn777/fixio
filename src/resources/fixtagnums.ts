@@ -1,6 +1,6 @@
 function isKeyvalsLike(value: unknown): value is keyvals {
   return typeof value === 'number' // value is number
-  || (typeof value === 'string' && !isNaN(value as any) && !isNaN(parseFloat(value as any))) // value is numeric string
+    || (typeof value === 'string' && !isNaN(value as any) && !isNaN(parseFloat(value as any))) // value is numeric string
 }
 
 export function resolveKey(key: number | `${number}` | keyvals): keyof typeof keyvals
@@ -972,4 +972,5 @@ export enum keyvals {
   "Nested3PartySubIDType" = 954,
   "LegContractSettlMonth" = 955,
   "LegInterestAccrualDate" = 956,
+  "ApplVerID" = 1128,
 }

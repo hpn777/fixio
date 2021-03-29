@@ -28,6 +28,7 @@ export interface FIXSessionOptions {
     readonly senderSubID?: unknown;
     readonly targetCompID?: unknown;
     readonly targetSubID?: unknown;
+    readonly appVerID?: unknown;
     readonly senderLocationID?: unknown;
     readonly logFolder?: string;
     readonly isDuplicateFunc?: (senderId: unknown, targetId: unknown) => boolean;
@@ -49,12 +50,7 @@ export class FIXSession extends EventEmitter {
         'outgoingSeqNum': 1,
     }
 
-    #saveSession = throttle(
-        () => {
-            storage.setItemSync(this.#key, this.#session)
-        },
-        100,
-    )
+    #saveSession = throttle(() => storage.setItemSync(this.#key, this.#session), 100)
 
     #timeOfLastIncoming = new Date().getTime();
 
@@ -96,21 +92,21 @@ export class FIXSession extends EventEmitter {
                 this.#targetSubID = fix[keyvals.TargetSubID]
                 //==Check duplicate connections
                 if (this.#isDuplicateFunc(this.#senderCompID, this.#targetCompID)) {
-                    const error = '[ERROR] Session already logged in:' + raw;
+                    const error = `[ERROR] Session already logged in:${raw}`;
                     throw new Error(error)
                 }
 
                 //==Authenticate connection
                 if (!this.#isAuthenticFunc(fix, this.#fixClient.connection?.remoteAddress)) {
-                    const error = '[ERROR] Session not authentic:' + raw;
+                    const error = `[ERROR] Session not authentic:${raw}`;
                     throw new Error(error)
                 }
 
                 //==Sync sequence numbers from data store
                 if (this.#resetSeqNumOnReconect) {
                     this.#session = {
-                        'incomingSeqNum': 1,
-                        'outgoingSeqNum': 1
+                        incomingSeqNum: 1,
+                        outgoingSeqNum: 1
                     }
                 } else {
                     this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)
@@ -141,7 +137,7 @@ export class FIXSession extends EventEmitter {
 
                 //==counter party might be dead, kill connection
                 if (currentTime - this.#timeOfLastIncoming > heartbeatInMilliSeconds * 2 && this.#expectHeartbeats) {
-                    const error = this.#targetCompID + '[ERROR] No heartbeat from counter party in milliseconds ' + heartbeatInMilliSeconds * 1.5;
+                    const error = this.#targetCompID + `[ERROR] No heartbeat from counter party in milliseconds ${(heartbeatInMilliSeconds * 1.5)}`;
                     this.#fixClient.connection?.emit('error', error)
                     //throw new Error(error)
                 }
@@ -170,7 +166,7 @@ export class FIXSession extends EventEmitter {
             }
 
             if (msgSeqNum < this.#session.incomingSeqNum && !this.#isResendRequested) {
-                const error = '[ERROR] Incoming sequence number [' + msgSeqNum + '] lower than expected [' + this.#session.incomingSeqNum + ']'
+                const error = `[ERROR] Incoming sequence number [${msgSeqNum}] lower than expected [${this.#session.incomingSeqNum}]`
                 this.logoff(error)
                 throw new Error(error + ' : ' + raw)
             }
@@ -277,8 +273,8 @@ export class FIXSession extends EventEmitter {
         //==Sync sequence numbers from data store
         if (this.#resetSeqNumOnReconect) {
             this.#session = {
-                'incomingSeqNum': 1,
-                'outgoingSeqNum': 1,
+                incomingSeqNum: 1,
+                outgoingSeqNum: 1,
             }
         } else {
             this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)
@@ -317,6 +313,7 @@ export class FIXSession extends EventEmitter {
                 senderSubID: this.#senderSubID,
                 targetSubID: this.#targetSubID,
                 senderLocationID: this.#senderLocationID,
+                appVerID: this.#appVerID
             },
         );
 
@@ -341,18 +338,9 @@ export class FIXSession extends EventEmitter {
         if (this.#file === null) {
             this.#logfilename = this.#logFolder + '/' + this.#key + '.log';
 
-            try {
-                mkdirSync(this.#logFolder)
-            } catch {
-                // pass
-            }
-
-            try {
-                if (this.#resetSeqNumOnReconect) {
-                    unlinkSync(this.#logfilename);
-                }
-            } catch {
-                // pass
+            mkdirSync(this.#logFolder)
+            if (this.#resetSeqNumOnReconect) {
+                unlinkSync(this.#logfilename);
             }
 
             this.#file = createWriteStream(
@@ -471,6 +459,8 @@ export class FIXSession extends EventEmitter {
     #targetCompID: Required<FIXSessionOptions>['targetCompID']
 
     #targetSubID: Required<FIXSessionOptions>['targetSubID']
+
+    #appVerID: Required<FIXSessionOptions>['appVerID']
 
     #senderLocationID: Required<FIXSessionOptions>['senderLocationID']
 
