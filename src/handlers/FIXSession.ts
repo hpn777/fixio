@@ -338,9 +338,18 @@ export class FIXSession extends EventEmitter {
         if (this.#file === null) {
             this.#logfilename = this.#logFolder + '/' + this.#key + '.log';
 
-            mkdirSync(this.#logFolder)
-            if (this.#resetSeqNumOnReconect) {
-                unlinkSync(this.#logfilename);
+            try {
+                mkdirSync(this.#logFolder)
+            } catch {
+                // pass
+            }
+
+            try {
+                if (this.#resetSeqNumOnReconect) {
+                    unlinkSync(this.#logfilename);
+                }
+            } catch {
+                // pass
             }
 
             this.#file = createWriteStream(

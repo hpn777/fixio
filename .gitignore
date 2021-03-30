@@ -2,7 +2,7 @@
 /node_modules
 traffic
 /package-lock.json
-**/*.js
+# **/*.js
 **/*.d.ts
 **/*.map
 .vscode/
