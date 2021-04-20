@@ -1,20 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
-  "version": "1.1.8",
+  "version": "1.2.6",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
   },
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest"
+    "watch": "tsc -w"
   },
   "bugs": {
     "url": "https://github.com/hpn777/fixio/issues"
   },
   "dependencies": {
+    "lodash.throttle": "^4.1.1",
     "node-persist": "~2.1.0",
     "rxjs": "^6.2.0",
     "tslib": "^2.1.0"
@@ -34,28 +34,10 @@
     "type": "git",
     "url": "git://github.com/hpn777/fixio.git"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "json",
-      "jsx",
-      "node"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.ts?(x)",
-      "**/?(*.)+(spec|test).ts?(x)"
-    ]
-  },
   "devDependencies": {
     "@tsconfig/node14": "^1.0.0",
-    "@types/jest": "^26.0.0",
+    "@types/lodash.throttle": "^4.1.6",
     "@types/node": "^14.0.0",
-    "jest": "^26.0.0",
-    "ts-jest": "^26.0.0",
     "typescript": "~4.2.0-beta || ~4.2.0-rc || ~4.2.0"
   }
 }

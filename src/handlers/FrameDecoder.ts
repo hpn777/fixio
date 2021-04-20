@@ -1,17 +1,16 @@
 import { checksum } from '../fixutils'
 import { Observable, from } from 'rxjs'
+import unknown from 'lodash.throttle'
 
 //static vars
 const SOHCHAR = String.fromCharCode(1)
 const re = new RegExp(SOHCHAR, "g")
-const ENDOFTAG8 = 10
-const STARTOFTAG9VAL = ENDOFTAG8 + 2;
 const SIZEOFTAG10 = 8
 
 export class FrameDecoder {
     #buffer: string = ''
 
-    public readonly decode = (data: { toString(): string }): Observable<string> => {
+    public readonly decode = (data: { toString(): string }): Array<string> => {
         this.#buffer += data.toString()
         const messages: Array<string> = []
 
@@ -19,14 +18,37 @@ export class FrameDecoder {
             //====================================Step 1: Extract complete FIX message====================================
 
             //If we don't have enough data to start extracting body length, wait for more data
-            if (this.#buffer.length <= ENDOFTAG8) {
-                return from(messages)
+            if (this.#buffer.length <= SIZEOFTAG10) {
+                return messages
             }
 
-            const idxOfEndOfTag9 = Number(this.#buffer.substring(ENDOFTAG8).indexOf(SOHCHAR)) + ENDOFTAG8;
-            const bodyLength = Number(this.#buffer.substring(STARTOFTAG9VAL, idxOfEndOfTag9));
+            let msgLength = 0
+            let cursor = 0
+            while (cursor < this.#buffer.length) {
+                let i = cursor
+                let attrLength = 0
+                let key = ''
+                let value: string
+                while (true) {
+                    if (this.#buffer[i] === '=') {
+                        key = this.#buffer.substr(cursor, attrLength)
+                        attrLength = 0
+                        cursor = i + 1
+                    }
+                    else if (this.#buffer[i] === SOHCHAR) {
+                        value = this.#buffer.substr(cursor, attrLength - 1)
+                        cursor = i + 1
+                        break;
+                    }
+                    attrLength++
+                    i++
+                }
+                if (key === '9') {
+                    msgLength = Number(value) + i + SIZEOFTAG10
 
-            const msgLength = bodyLength + idxOfEndOfTag9 + SIZEOFTAG10
+                    break;
+                }
+            }
 
             let msg: string
             if (!isNaN(msgLength) && this.#buffer.length >= msgLength) {
@@ -40,7 +62,7 @@ export class FrameDecoder {
                 }
             }
             else {//Message received!
-                return from(messages)
+                return messages
             }
             //====================================Step 2: Validate message====================================
 
@@ -56,6 +78,6 @@ export class FrameDecoder {
             messages.push(msg)
         }
 
-        return from(messages)
+        return messages
     }
 }

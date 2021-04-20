@@ -3,7 +3,7 @@ import { createInterface as createReadlineInterface } from 'readline'
 // @ts-ignore no type defs for v2
 import storage from 'node-persist'
 import { EventEmitter } from 'events'
-import throttle from 'lodash/throttle'
+import throttle from 'lodash.throttle'
 import { convertToMap, convertToFIX, getUTCTimeStamp } from '../fixutils'
 import { keyvals } from '../resources/fixtagnums'
 import type { Socket } from 'net'
@@ -35,7 +35,7 @@ export interface FIXSessionOptions {
     readonly isAuthenticFunc?: (fix: ReturnType<typeof convertToMap>, fixClientRemoteAddress: string | undefined) => boolean;
     readonly retriveSession?: (senderId: unknown, targetId: unknown) => Session;
     readonly resetSeqNumOnReconect?: boolean;
-    readonly defaultHeartbeatSeconds?: `${number}`;
+    readonly defaultHeartbeatSeconds?: any;
     readonly sendHeartbeats?: boolean;
     readonly expectHeartbeats?: boolean;
     readonly respondToLogon?: boolean;
@@ -92,13 +92,13 @@ export class FIXSession extends EventEmitter {
                 this.#targetSubID = fix[keyvals.TargetSubID]
                 //==Check duplicate connections
                 if (this.#isDuplicateFunc(this.#senderCompID, this.#targetCompID)) {
-                    const error = `[ERROR] Session already logged in:${raw}`;
+                    const error = `[ERROR] Session already logged in: ${raw} `;
                     throw new Error(error)
                 }
 
                 //==Authenticate connection
                 if (!this.#isAuthenticFunc(fix, this.#fixClient.connection?.remoteAddress)) {
-                    const error = `[ERROR] Session not authentic:${raw}`;
+                    const error = `[ERROR] Session not authentic: ${raw} `;
                     throw new Error(error)
                 }
 
@@ -137,7 +137,7 @@ export class FIXSession extends EventEmitter {
 
                 //==counter party might be dead, kill connection
                 if (currentTime - this.#timeOfLastIncoming > heartbeatInMilliSeconds * 2 && this.#expectHeartbeats) {
-                    const error = this.#targetCompID + `[ERROR] No heartbeat from counter party in milliseconds ${(heartbeatInMilliSeconds * 1.5)}`;
+                    const error = this.#targetCompID + `[ERROR] No heartbeat from counter party in milliseconds ${(heartbeatInMilliSeconds * 1.5)} `;
                     this.#fixClient.connection?.emit('error', error)
                     //throw new Error(error)
                 }
@@ -166,7 +166,7 @@ export class FIXSession extends EventEmitter {
             }
 
             if (msgSeqNum < this.#session.incomingSeqNum && !this.#isResendRequested) {
-                const error = `[ERROR] Incoming sequence number [${msgSeqNum}] lower than expected [${this.#session.incomingSeqNum}]`
+                const error = `[ERROR] Incoming sequence number[${msgSeqNum}]lower than expected[${this.#session.incomingSeqNum}]`
                 this.logoff(error)
                 throw new Error(error + ' : ' + raw)
             }
@@ -264,7 +264,7 @@ export class FIXSession extends EventEmitter {
     }
 
     public readonly logon = (
-        logonmsg: Partial<Readonly<Record<keyvals, unknown>>> = {
+        logonmsg: Record<any, unknown> = {
             [keyvals.MsgType]: 'A',
             [keyvals.EncryptMethod]: '0',
             [keyvals.HeartBtInt]: '10',
@@ -293,10 +293,10 @@ export class FIXSession extends EventEmitter {
     }
 
     public readonly send = (
-        immutableMsg: Partial<Readonly<Record<keyvals, unknown>>>,
+        immutableMsg: Record<any, unknown>,
         replay?: boolean,
     ) => {
-        const msg: Partial<Record<keyvals, unknown>> = { ...immutableMsg }
+        const msg: Record<any, unknown> = { ...immutableMsg }
         if (!replay) {
             msg[keyvals.LastMsgSeqNumProcessed] = this.#session.incomingSeqNum - 1
         }
@@ -504,8 +504,8 @@ export class FIXSession extends EventEmitter {
         this.#targetSubID = options.targetSubID
         this.#senderLocationID = options.senderLocationID
         this.#logFolder = options.logFolder ?? './traffic'
-        this.#key = `${this.#senderCompID}-${this.#targetCompID}`
-        this.#isDuplicateFunc = options.isDuplicateFunc ?? ((senderId, targetId) => sessions[`${senderId}-${targetId}`]?.isLoggedIn ?? false)
+        this.#key = `${this.#senderCompID}-${this.#targetCompID} `
+        this.#isDuplicateFunc = options.isDuplicateFunc ?? ((senderId, targetId) => sessions[`${senderId} -${targetId} `]?.isLoggedIn ?? false)
         this.#isAuthenticFunc = options.isAuthenticFunc ?? (() => true)
         this.#retriveSession = options.retriveSession ?? ((senderId, targetId) => {
             this.#key = senderId + '-' + targetId

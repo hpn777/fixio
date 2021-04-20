@@ -3,14 +3,14 @@ function isKeyvalsLike(value: unknown): value is keyvals {
     || (typeof value === 'string' && !isNaN(value as any) && !isNaN(parseFloat(value as any))) // value is numeric string
 }
 
-export function resolveKey(key: number | `${number}` | keyvals): keyof typeof keyvals
-export function resolveKey(key: string | keyof typeof keyvals): keyvals
-export function resolveKey(key: unknown): unknown {
-  if (isKeyvalsLike(key)) {
-    return keyvals[key] ?? '(NotDefined)'
-  }
+// export function resolveKey(key: number | any | keyvals): keyof typeof keyvals
+// export function resolveKey(key: string | keyof typeof keyvals): keyvals
+export function resolveKey(key: any): any {
+  // if (isKeyvalsLike(key)) {
+  //   return keyvals[key] ?? '(NotDefined)'
+  // }
 
-  return keyvals[key as any] || NaN
+  return keyvals[key] || key
 }
 
 export enum keyvals {

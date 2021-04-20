@@ -19,7 +19,7 @@ export class FIXServer {
     public readonly port: FIXServerOptions['port']
     public readonly host: FIXServerOptions['host']
     public readonly options: FIXServerOptions
-    public readonly fixSessions: Partial<Record<string, SessionHolder>> = {}
+    public readonly fixSessions: Record<string, SessionHolder> = {}
     public readonly connect$ = new Subject
     public readonly logon$ = new Subject<string>()
     public readonly logoff$ = new Subject

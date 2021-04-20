@@ -1,7 +1,7 @@
 import { fixRepeatingGroups } from './resources/fixSchema'
 import { resolveKey, keyvals } from './resources/fixtagnums'
 
-const headerFields: Partial<Readonly<Record<keyvals, boolean>>> = {
+const headerFields: Record<any, boolean> = {
     [keyvals.BeginString]: true,
     [keyvals.BodyLength]: true,
     [keyvals.MsgType]: true,
@@ -59,7 +59,7 @@ export function checksum(str: string) {
     return checksumstr;
 }
 
-export function convertMapToFIX(map: Readonly<Partial<Record<keyvals, unknown>>>) {
+export function convertMapToFIX(map: Record<number, unknown>) {
     return convertToFIX(
         map,
         map[keyvals.BeginString],
@@ -74,7 +74,7 @@ export function convertMapToFIX(map: Readonly<Partial<Record<keyvals, unknown>>>
 }
 
 export function convertToFIX(
-    msgraw: Readonly<Partial<Record<keyvals, unknown>>>,
+    msgraw: Record<any, unknown>,
     fixVersion: unknown,
     timeStamp: unknown,
     senderCompID: unknown,
@@ -88,7 +88,7 @@ export function convertToFIX(
     },
 ): string {
     //defensive copy
-    const msg: Record<keyvals, unknown> = { ...msgraw } as any;
+    const msg: Record<any, unknown> = { ...msgraw };
 
     delete msg[keyvals.BodyLength]; //bodylength
     delete msg[keyvals.CheckSum]; //checksum
@@ -122,7 +122,7 @@ export function convertToFIX(
 
     headermsgarr.push('52=' + timeStamp, SOHCHAR);
 
-    for (const [tag, item] of (Object.entries(msg) as unknown as Array<[keyvals, unknown]>)) {
+    for (const [tag, item] of Object.entries(msg)) {
         if (headerFields[tag] !== true) {
             if (Array.isArray(item)) {
                 bodymsgarr.push(tag, '=', item.length, SOHCHAR)
@@ -155,14 +155,14 @@ export function convertToFIX(
     return outmsg;
 }
 
-function convertToKeyvals(msg: string): ReadonlyArray<readonly [`${number}`, unknown]> {
-    const keyvals: Array<[`${number}`, unknown]> = []
+function convertToKeyvals(msg: string): Array<[any, unknown]> {
+    const keyvals: Array<[any, unknown]> = []
     let cursor = 0
 
     while (cursor < msg.length) {
         let i = cursor
         let attrLength = 0
-        let key: `${number}` | undefined
+        let key: any | undefined
         let value: unknown
         while (true) {
             if (msg[i] === '=') {
@@ -207,7 +207,7 @@ export function convertToMap(msg: string) {
                 i++
             } else {
                 const nr = Number(pair[1])
-                if (nr) {
+                if (!isNaN(nr)) {
                     const response = repeatingGroupToMap(repeatinGroup, nr, keyvals.slice(i + 1));
                     fix[pair[0] as unknown as number] = response.repeatingGroup
                     i += (1 + response.length)
@@ -222,8 +222,8 @@ export function convertToMap(msg: string) {
     return fix;
 }
 
-export function convertToJSON(msg: string): Partial<Readonly<Record<keyof typeof keyvals, unknown>>> {
-    const fix: Partial<Record<keyof typeof keyvals, unknown>> = {}
+export function convertToJSON(msg: string): Record<any, unknown> {
+    const fix: Record<any, unknown> = {}
     const msgKeyvals = convertToKeyvals(msg)
 
     let i = 0;
@@ -235,7 +235,7 @@ export function convertToJSON(msg: string): Partial<Readonly<Record<keyof typeof
             i++
         } else {
             const nr = Number(value)
-            if (nr) {
+            if (!isNaN(nr)) {
                 const response = repeatingGroupToJSON(repeatingGroup, nr, msgKeyvals.slice(i + 1))
                 fix[resolveKey(key)] = response.repeatingGroup
                 i += (1 + response.length)
@@ -249,16 +249,16 @@ export function convertToJSON(msg: string): Partial<Readonly<Record<keyof typeof
 }
 
 function repeatingGroupToMap(
-    repeatinGroup: ReadonlyArray<`${number}`>,
+    repeatinGroup: Array<any>,
     nr: number,
-    msgKeyvals: ReadonlyArray<readonly [`${number}`, unknown]>,
+    msgKeyvals: Array<[any, unknown]>,
 ): {
     readonly length: number;
-    readonly repeatingGroup: ReadonlyArray<Partial<Readonly<Record<number, unknown>>>>;
+    readonly repeatingGroup: Array<Record<any, unknown>>;
 } {
     const response: {
         length: number;
-        repeatingGroup: Array<Partial<Record<number, unknown>>>;
+        repeatingGroup: Array<Record<any, unknown>>;
     } = {
         repeatingGroup: [],
         length: 0
@@ -271,7 +271,7 @@ function repeatingGroupToMap(
             if (repeatinGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatinGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             } else {
-                group[msgKeyvals[k][0] as unknown as number] = msgKeyvals[k][1]
+                group[msgKeyvals[k][0]] = msgKeyvals[k][1]
                 ++k
                 ++index
             }
@@ -283,16 +283,16 @@ function repeatingGroupToMap(
 }
 
 function repeatingGroupToJSON(
-    repeatingGroup: ReadonlyArray<`${number}`>,
+    repeatingGroup: Array<any>,
     nr: number,
-    keyvalPairs: ReadonlyArray<ReadonlyArray<any>>,
+    keyvalPairs: Array<Array<any>>,
 ): {
     readonly length: number;
-    readonly repeatingGroup: ReadonlyArray<Partial<Readonly<Record<keyof typeof keyvals, unknown>>>>;
+    readonly repeatingGroup: Array<Record<any, unknown>>;
 } {
     const response: {
         length: number;
-        repeatingGroup: Array<Partial<Record<keyof typeof keyvals, unknown>>>;
+        repeatingGroup: Array<Record<any, unknown>>;
     } = {
         repeatingGroup: [],
         length: 0,

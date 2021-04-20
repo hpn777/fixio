@@ -42,7 +42,7 @@ export class FIXClient implements FIXConnection {
 
     public readonly resetFIXSession: FIXSession['resetFIXSession'] = (clearHistory) => this.#fixSession.resetFIXSession(clearHistory)
 
-    public readonly send = (fix: Partial<Readonly<Record<keyvals, unknown>>>) => {
+    public readonly send = (fix: Record<any, unknown>) => {
         if (this.connection) {
             this.#fixSession.send(fix)
         }
