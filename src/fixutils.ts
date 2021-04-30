@@ -74,7 +74,7 @@ export function convertMapToFIX(map: Record<number, unknown>) {
 }
 
 export function convertToFIX(
-    msgraw: Record<any, unknown>,
+    msg: Record<any, unknown>,
     fixVersion: unknown,
     timeStamp: unknown,
     senderCompID: unknown,
@@ -88,8 +88,6 @@ export function convertToFIX(
     },
 ): string {
     //defensive copy
-    const msg: Record<any, unknown> = { ...msgraw };
-
     delete msg[keyvals.BodyLength]; //bodylength
     delete msg[keyvals.CheckSum]; //checksum
 
@@ -127,8 +125,13 @@ export function convertToFIX(
             if (Array.isArray(item)) {
                 bodymsgarr.push(tag, '=', item.length, SOHCHAR)
                 for (const group of item) {
-                    for (const [tag, item] of Object.entries(group)) {
-                        bodymsgarr.push(tag, '=', item, SOHCHAR)
+                    if (fixRepeatingGroups[tag]) {
+                        fixRepeatingGroups[tag].forEach(x => {
+                            bodymsgarr.push(x, '=', group[x], SOHCHAR)
+                        })
+                    }
+                    else {
+                        throw (new Error('Schema definition for the group is not defined.'))
                     }
                 }
             } else {
