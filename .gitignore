@@ -1,6 +1,5 @@
-.node-persist
 /node_modules
-traffic
+storage
 /package-lock.json
 # **/*.js
 **/*.d.ts

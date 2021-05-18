@@ -12,8 +12,6 @@ export interface FIXConnection {
     readonly connection?: Socket
 }
 
-storage.initSync()
-
 export interface Session {
     incomingSeqNum: number;
     outgoingSeqNum: number;
@@ -23,6 +21,7 @@ export interface Session {
 const sessions: Record<string, Session> = {}
 
 export interface FIXSessionOptions {
+    readonly storagePath: unknown;
     readonly fixVersion?: unknown;
     readonly senderCompID?: unknown;
     readonly senderSubID?: unknown;
@@ -101,7 +100,7 @@ export class FIXSession extends EventEmitter {
                     const error = `[ERROR] Session not authentic: ${raw} `;
                     throw new Error(error)
                 }
-
+                this.createsessionStorage(this.#senderCompID, this.#targetCompID)
                 //==Sync sequence numbers from data store
                 if (this.#resetSeqNumOnReconect) {
                     this.#session = {
@@ -492,9 +491,26 @@ export class FIXSession extends EventEmitter {
     #respondToLogon: Required<FIXSessionOptions>['respondToLogon']
 
     #key: string
+    private createsessionStorage = (senderCompID: any, targetCompID: any) => {
+        this.#key = `${senderCompID}-${targetCompID}`
+        this.#retriveSession = ((senderId, targetId) => {
+            this.#key = senderId + '-' + targetId
 
+            sessions[this.#key] = storage.getItemSync(this.#key) ?? {
+                incomingSeqNum: 1,
+                outgoingSeqNum: 1,
+            }
+
+            sessions[this.#key].isLoggedIn = false //default is always logged out
+
+            return sessions[this.#key]
+        })
+    }
     constructor(fixClient: FIXConnection, isAcceptor: boolean, options: FIXSessionOptions) {
         super()
+        storage.init({
+            dir: options.logFolder ?? './storage'
+        })
         this.#fixClient = fixClient
         this.#isAcceptor = isAcceptor
         this.#fixVersion = options.fixVersion
@@ -503,22 +519,25 @@ export class FIXSession extends EventEmitter {
         this.#targetCompID = options.targetCompID
         this.#targetSubID = options.targetSubID
         this.#senderLocationID = options.senderLocationID
-        this.#logFolder = options.logFolder ?? './traffic'
-        this.#key = `${this.#senderCompID}-${this.#targetCompID} `
+
+        this.#retriveSession = () => {
+            return {
+                incomingSeqNum: 1,
+                outgoingSeqNum: 1,
+                isLoggedIn: false
+            }
+        }
+
+        if (options.senderCompID && options.targetCompID) {
+            this.createsessionStorage(options.senderCompID, options.targetCompID)
+        }
+
+        this.#logFolder = options.logFolder ?? './storage'
+
+        this.#key = `${this.#senderCompID}-${this.#targetCompID}`
         this.#isDuplicateFunc = options.isDuplicateFunc ?? ((senderId, targetId) => sessions[`${senderId} -${targetId} `]?.isLoggedIn ?? false)
         this.#isAuthenticFunc = options.isAuthenticFunc ?? (() => true)
-        this.#retriveSession = options.retriveSession ?? ((senderId, targetId) => {
-            this.#key = senderId + '-' + targetId
 
-            sessions[this.#key] = storage.getItemSync(this.#key) ?? {
-                'incomingSeqNum': 1,
-                'outgoingSeqNum': 1,
-            }
-
-            sessions[this.#key].isLoggedIn = false //default is always logged out
-
-            return sessions[this.#key]
-        })
         this.#resetSeqNumOnReconect = options.resetSeqNumOnReconect ?? true
         this.#defaultHeartbeatSeconds = options.defaultHeartbeatSeconds ?? '10'
         this.#sendHeartbeats = options.sendHeartbeats ?? true

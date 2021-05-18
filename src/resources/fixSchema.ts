@@ -1,6 +1,6 @@
 export const fixRepeatingGroups: Record<string, Array<any>> = {
     '534': ['41', '84', '535', '536'],
-    '453': ['448', '447', '452', '2378'], //MIFID II fields
+    '453': ['448', '447', '452', '2376'], //MIFID II fields
     '457': ['457 ', '459'],
     '9070': ['9071', '9072', '9073'],
     '33': ['58'], //fields to carry text
