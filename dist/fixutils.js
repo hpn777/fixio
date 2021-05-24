@@ -90,7 +90,6 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
                 for (const group of item) {
                     if (fixSchema_1.fixRepeatingGroups[tag]) {
                         fixSchema_1.fixRepeatingGroups[tag].forEach(x => {
-                            console.log(x, group);
                             bodymsgarr.push(x, '=', group[x], exports.SOHCHAR);
                         });
                     }

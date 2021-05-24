@@ -127,7 +127,6 @@ export function convertToFIX(
                 for (const group of item) {
                     if (fixRepeatingGroups[tag]) {
                         fixRepeatingGroups[tag].forEach(x => {
-                            console.log(x, group)
                             bodymsgarr.push(x, '=', group[x], SOHCHAR)
                         })
                     }
