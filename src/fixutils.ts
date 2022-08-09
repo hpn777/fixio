@@ -93,7 +93,6 @@ export function convertToFIX(
 
     const headermsgarr: Array<unknown> = [];
     const bodymsgarr: Array<unknown> = [];
-    //const trailermsgarr = [];
 
     headermsgarr.push('35=' + msg['35'], SOHCHAR);
 
@@ -120,6 +119,10 @@ export function convertToFIX(
 
     headermsgarr.push('52=' + timeStamp, SOHCHAR);
 
+    if(msg['369'] !== undefined){
+        headermsgarr.push('369=' + msg['369'], SOHCHAR);
+    }
+    
     for (const [tag, item] of Object.entries(msg)) {
         if (headerFields[tag] !== true) {
             if (Array.isArray(item)) {
@@ -141,7 +144,6 @@ export function convertToFIX(
     }
 
     const headermsg = headermsgarr.join('');
-    //const trailermsg = trailermsgarr.join('');
     const bodymsg = bodymsgarr.join('');
 
     const outmsgarr: Array<unknown> = [];
@@ -149,7 +151,6 @@ export function convertToFIX(
     outmsgarr.push('9=', (headermsg.length + bodymsg.length), SOHCHAR);
     outmsgarr.push(headermsg);
     outmsgarr.push(bodymsg);
-    //outmsgarr.push(trailermsg);
 
     let outmsg = outmsgarr.join('');
 
@@ -234,7 +235,8 @@ export function convertToJSON(msg: string): Record<any, unknown> {
         const [key, value] = msgKeyvals[i]
         const repeatingGroup = fixRepeatingGroups[key]
         if (repeatingGroup === undefined) {
-            fix[resolveKey(key)] = value
+            const nr = Number(value)
+            fix[resolveKey(key)] = !isNaN(nr) ? nr : value
             i++
         } else {
             const nr = Number(value)

@@ -11,57 +11,63 @@ const FIXSession_1 = require("./handlers/FIXSession");
 const FrameDecoder_1 = require("./handlers/FrameDecoder");
 exports.fixutil = tslib_1.__importStar(require("./fixutils"));
 class FIXClient {
+    #fixSession;
+    #frameDecoder;
+    #ssl;
+    connect$ = new rxjs_1.Subject;
+    logon$ = new rxjs_1.Subject;
+    logoff$ = new rxjs_1.Subject;
+    fixIn$ = new rxjs_1.Subject();
+    dataIn$ = new rxjs_1.Subject();
+    jsonIn$ = new rxjs_1.Subject();
+    fixOut$ = new rxjs_1.Subject();
+    dataOut$ = new rxjs_1.Subject();
+    jsonOut$ = new rxjs_1.Subject();
+    end$ = new rxjs_1.Subject;
+    close$ = new rxjs_1.Subject;
+    error$ = new rxjs_1.Subject;
+    connection;
+    logon = (logonmsg) => this.#fixSession.logon(logonmsg);
+    logoff = (logoffReason) => this.#fixSession.logoff(logoffReason);
+    resetFIXSession = (clearHistory) => this.#fixSession.resetFIXSession(clearHistory);
+    send = (fix) => {
+        if (this.connection) {
+            this.#fixSession.send(fix);
+        }
+    };
+    #port;
+    #host;
+    reconnect = () => this.connect(this.#port, this.#host, true);
+    connect = (port, host, isReconnect, connectionListener) => {
+        this.#host = host;
+        this.#port = port;
+        const socket = this.#ssl ? new tls_1.TLSSocket() : new net_1.Socket();
+        this.connection = socket.connect({ port, host }, connectionListener);
+        if (!isReconnect) {
+            (0, rxjs_1.fromEvent)(this.#fixSession, 'logon').subscribe(this.logon$);
+            (0, rxjs_1.fromEvent)(this.#fixSession, 'logoff').subscribe(this.logoff$);
+            (0, rxjs_1.fromEvent)(this.#fixSession, 'dataOut').subscribe(this.dataOut$);
+            const fixOut$ = (0, rxjs_1.fromEvent)(this.#fixSession, 'fixOut').pipe((0, operators_1.share)());
+            fixOut$.subscribe(this.fixOut$);
+            fixOut$.pipe((0, operators_1.map)(fixutils_1.convertToJSON)).subscribe(this.jsonOut$);
+        }
+        (0, rxjs_1.fromEvent)(this.connection, 'connect').subscribe(this.connect$);
+        (0, rxjs_1.fromEvent)(this.connection, 'error').subscribe(this.error$);
+        (0, rxjs_1.fromEvent)(this.connection, 'end').subscribe(this.end$);
+        (0, rxjs_1.fromEvent)(this.connection, 'close').subscribe(this.close$);
+        const fixIn$ = (0, rxjs_1.fromEvent)(this.connection, 'data').pipe((0, operators_1.mergeMap)((raw) => this.#frameDecoder.decode(raw)), (0, operators_1.catchError)((ex) => {
+            this.connection?.emit('error', ex);
+            return rxjs_1.NEVER;
+        }), (0, operators_1.share)());
+        fixIn$.subscribe(this.fixIn$);
+        const dataIn$ = fixIn$.pipe((0, operators_1.map)((msg) => this.#fixSession.decode(msg)), (0, operators_1.catchError)((ex) => {
+            this.connection?.emit('error', ex);
+            return rxjs_1.NEVER;
+        }), (0, operators_1.share)());
+        dataIn$.subscribe(this.dataIn$);
+        fixIn$.pipe((0, operators_1.map)(fixutils_1.convertToJSON)).subscribe(this.jsonIn$);
+    };
     constructor(fixVersion, senderCompID, targetCompID, opt) {
-        this.connect$ = new rxjs_1.Subject;
-        this.logon$ = new rxjs_1.Subject;
-        this.logoff$ = new rxjs_1.Subject;
-        this.fixIn$ = new rxjs_1.Subject();
-        this.dataIn$ = new rxjs_1.Subject();
-        this.jsonIn$ = new rxjs_1.Subject();
-        this.fixOut$ = new rxjs_1.Subject();
-        this.dataOut$ = new rxjs_1.Subject();
-        this.jsonOut$ = new rxjs_1.Subject();
-        this.end$ = new rxjs_1.Subject;
-        this.close$ = new rxjs_1.Subject;
-        this.error$ = new rxjs_1.Subject;
-        this.logon = (logonmsg) => this.#fixSession.logon(logonmsg);
-        this.logoff = (logoffReason) => this.#fixSession.logoff(logoffReason);
-        this.resetFIXSession = (clearHistory) => this.#fixSession.resetFIXSession(clearHistory);
-        this.send = (fix) => {
-            if (this.connection) {
-                this.#fixSession.send(fix);
-            }
-        };
-        this.reconnect = () => this.connect(this.#port, this.#host, true);
-        this.connect = (port, host, isReconnect, connectionListener) => {
-            this.#host = host;
-            this.#port = port;
-            const socket = this.#ssl ? new tls_1.TLSSocket() : new net_1.Socket();
-            this.connection = socket.connect({ port, host }, connectionListener);
-            if (!isReconnect) {
-                rxjs_1.fromEvent(this.#fixSession, 'logon').subscribe(this.logon$);
-                rxjs_1.fromEvent(this.#fixSession, 'logoff').subscribe(this.logoff$);
-                rxjs_1.fromEvent(this.#fixSession, 'dataOut').subscribe(this.dataOut$);
-                const fixOut$ = rxjs_1.fromEvent(this.#fixSession, 'fixOut').pipe(operators_1.share());
-                fixOut$.subscribe(this.fixOut$);
-                fixOut$.pipe(operators_1.map(fixutils_1.convertToJSON)).subscribe(this.jsonOut$);
-            }
-            rxjs_1.fromEvent(this.connection, 'connect').subscribe(this.connect$);
-            rxjs_1.fromEvent(this.connection, 'error').subscribe(this.error$);
-            rxjs_1.fromEvent(this.connection, 'end').subscribe(this.end$);
-            rxjs_1.fromEvent(this.connection, 'close').subscribe(this.close$);
-            const fixIn$ = rxjs_1.fromEvent(this.connection, 'data').pipe(operators_1.mergeMap((raw) => this.#frameDecoder.decode(raw)), operators_1.catchError((ex) => {
-                this.connection?.emit('error', ex);
-                return rxjs_1.NEVER;
-            }), operators_1.share());
-            fixIn$.subscribe(this.fixIn$);
-            const dataIn$ = fixIn$.pipe(operators_1.map((msg) => this.#fixSession.decode(msg)), operators_1.catchError((ex) => {
-                this.connection?.emit('error', ex);
-                return rxjs_1.NEVER;
-            }), operators_1.share());
-            dataIn$.subscribe(this.dataIn$);
-            fixIn$.pipe(operators_1.map(fixutils_1.convertToJSON)).subscribe(this.jsonIn$);
-        };
         this.#fixSession = new FIXSession_1.FIXSession(this, false, {
             ...opt,
             senderCompID,
@@ -84,11 +90,6 @@ class FIXClient {
             });
         }
     }
-    #fixSession;
-    #frameDecoder;
-    #ssl;
-    #port;
-    #host;
 }
 exports.FIXClient = FIXClient;
 //# sourceMappingURL=FIXClient.js.map

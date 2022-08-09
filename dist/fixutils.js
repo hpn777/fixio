@@ -83,6 +83,9 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
     }
     headermsgarr.push('34=' + outgoingSeqNum, exports.SOHCHAR);
     headermsgarr.push('52=' + timeStamp, exports.SOHCHAR);
+    if (msg['369'] !== undefined) {
+        headermsgarr.push('369=' + msg['369'], exports.SOHCHAR);
+    }
     for (const [tag, item] of Object.entries(msg)) {
         if (headerFields[tag] !== true) {
             if (Array.isArray(item)) {
@@ -186,14 +189,15 @@ function convertToJSON(msg) {
         const [key, value] = msgKeyvals[i];
         const repeatingGroup = fixSchema_1.fixRepeatingGroups[key];
         if (repeatingGroup === undefined) {
-            fix[fixtagnums_1.resolveKey(key)] = value;
+            const nr = Number(value);
+            fix[(0, fixtagnums_1.resolveKey)(key)] = !isNaN(nr) ? nr : value;
             i++;
         }
         else {
             const nr = Number(value);
             if (!isNaN(nr)) {
                 const response = repeatingGroupToJSON(repeatingGroup, nr, msgKeyvals.slice(i + 1));
-                fix[fixtagnums_1.resolveKey(key)] = response.repeatingGroup;
+                fix[(0, fixtagnums_1.resolveKey)(key)] = response.repeatingGroup;
                 i += (1 + response.length);
             }
             else {
@@ -240,7 +244,7 @@ function repeatingGroupToJSON(repeatingGroup, nr, keyvalPairs) {
                 break;
             }
             else {
-                group[fixtagnums_1.resolveKey(keyvalPairs[k][0])] = keyvalPairs[k][1];
+                group[(0, fixtagnums_1.resolveKey)(keyvalPairs[k][0])] = keyvalPairs[k][1];
                 ++k;
                 ++index;
             }

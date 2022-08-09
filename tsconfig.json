@@ -3,7 +3,7 @@
     "src"
   ],
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@tsconfig/node14/tsconfig.json",
+  "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",

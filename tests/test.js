@@ -10,9 +10,7 @@ var i = 1
 console.time('perf')
 
 for (k = 0; k < 1000000; k++) {
-    let dupa = frameDecoder
-        .decode(testData)
-        .map(x => fixutils.convertToJSON(x))
+    let dupa = fixutils.convertToJSON(testData)
     i += dupa.length
 }
 console.timeEnd('perf')
