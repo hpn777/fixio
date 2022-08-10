@@ -111,7 +111,7 @@ export function convertToFIX(
     }
 
     if (options.targetSubID) {
-        headermsgarr.push(keyvals.SenderSubID, '=', msg[keyvals.SenderSubID] || options.targetSubID, SOHCHAR);
+        headermsgarr.push(keyvals.TargetSubID, '=', msg[keyvals.TargetSubID] || options.targetSubID, SOHCHAR);
     }
     if (options.senderLocationID) {
         headermsgarr.push(keyvals.SenderLocationID, '=', msg[keyvals.SenderLocationID] || options.senderLocationID, SOHCHAR);
