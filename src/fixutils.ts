@@ -149,7 +149,7 @@ export function convertToFIX(
     const bodymsg = bodymsgarr.join('');
 
     const outmsgarr: Array<unknown> = [];
-    outmsgarr.push(keyvals.BeginString, '=', msg['8'] || fixVersion, SOHCHAR);
+    outmsgarr.push(keyvals.BeginString, '=', msg[keyvals.BeginString] || fixVersion, SOHCHAR);
     outmsgarr.push(keyvals.BodyLength, '=', (headermsg.length + bodymsg.length), SOHCHAR);
     outmsgarr.push(headermsg);
     outmsgarr.push(bodymsg);
