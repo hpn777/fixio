@@ -14,6 +14,8 @@ const headerFields = {
     [fixtagnums_1.keyvals.TargetCompID]: true,
     [fixtagnums_1.keyvals.MsgSeqNum]: true,
     [fixtagnums_1.keyvals.ApplVerID]: true,
+    [fixtagnums_1.keyvals.SenderLocationID]: true,
+    [fixtagnums_1.keyvals.LastMsgSeqNumProcessed]: true
 };
 exports.SOHCHAR = String.fromCharCode(1);
 function setSOHCHAR(char) {
@@ -66,25 +68,25 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
     delete msg[fixtagnums_1.keyvals.CheckSum];
     const headermsgarr = [];
     const bodymsgarr = [];
-    headermsgarr.push('35=' + msg['35'], exports.SOHCHAR);
-    headermsgarr.push('49=' + (msg['49'] || senderCompID), exports.SOHCHAR);
-    headermsgarr.push('56=' + (msg['56'] || targetCompID), exports.SOHCHAR);
+    headermsgarr.push(fixtagnums_1.keyvals.MsgType, '=', msg[fixtagnums_1.keyvals.MsgType], exports.SOHCHAR);
+    headermsgarr.push(fixtagnums_1.keyvals.SenderCompID, '=', msg[fixtagnums_1.keyvals.SenderCompID] || senderCompID, exports.SOHCHAR);
+    headermsgarr.push(fixtagnums_1.keyvals.TargetCompID, '=', msg[fixtagnums_1.keyvals.TargetCompID] || targetCompID, exports.SOHCHAR);
     if (options.appVerID) {
-        headermsgarr.push('1128=' + (msg['1128'] || options.appVerID), exports.SOHCHAR);
+        headermsgarr.push(fixtagnums_1.keyvals.ApplVerID, '=', msg[fixtagnums_1.keyvals.ApplVerID] || options.appVerID, exports.SOHCHAR);
     }
     if (options.senderSubID) {
-        headermsgarr.push('50=' + (msg['50'] || options.senderSubID), exports.SOHCHAR);
+        headermsgarr.push(fixtagnums_1.keyvals.SenderSubID, '=', msg[fixtagnums_1.keyvals.SenderSubID] || options.senderSubID, exports.SOHCHAR);
     }
     if (options.targetSubID) {
-        headermsgarr.push('57=' + (msg['57'] || options.targetSubID), exports.SOHCHAR);
+        headermsgarr.push(fixtagnums_1.keyvals.SenderSubID, '=', msg[fixtagnums_1.keyvals.SenderSubID] || options.targetSubID, exports.SOHCHAR);
     }
     if (options.senderLocationID) {
-        headermsgarr.push('142=' + (msg['142'] || options.senderLocationID), exports.SOHCHAR);
+        headermsgarr.push(fixtagnums_1.keyvals.SenderLocationID, '=', msg[fixtagnums_1.keyvals.SenderLocationID] || options.senderLocationID, exports.SOHCHAR);
     }
-    headermsgarr.push('34=' + outgoingSeqNum, exports.SOHCHAR);
-    headermsgarr.push('52=' + timeStamp, exports.SOHCHAR);
-    if (msg['369'] !== undefined) {
-        headermsgarr.push('369=' + msg['369'], exports.SOHCHAR);
+    headermsgarr.push(fixtagnums_1.keyvals.MsgSeqNum, '=', outgoingSeqNum, exports.SOHCHAR);
+    headermsgarr.push(fixtagnums_1.keyvals.SendingTime, '=', timeStamp, exports.SOHCHAR);
+    if (msg[fixtagnums_1.keyvals.LastMsgSeqNumProcessed] !== undefined) {
+        headermsgarr.push(fixtagnums_1.keyvals.LastMsgSeqNumProcessed, '=', msg[fixtagnums_1.keyvals.LastMsgSeqNumProcessed], exports.SOHCHAR);
     }
     for (const [tag, item] of Object.entries(msg)) {
         if (headerFields[tag] !== true) {
@@ -109,8 +111,8 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
     const headermsg = headermsgarr.join('');
     const bodymsg = bodymsgarr.join('');
     const outmsgarr = [];
-    outmsgarr.push('8=', msg['8'] || fixVersion, exports.SOHCHAR);
-    outmsgarr.push('9=', (headermsg.length + bodymsg.length), exports.SOHCHAR);
+    outmsgarr.push(fixtagnums_1.keyvals.BeginString, '=', msg['8'] || fixVersion, exports.SOHCHAR);
+    outmsgarr.push(fixtagnums_1.keyvals.BodyLength, '=', (headermsg.length + bodymsg.length), exports.SOHCHAR);
     outmsgarr.push(headermsg);
     outmsgarr.push(bodymsg);
     let outmsg = outmsgarr.join('');

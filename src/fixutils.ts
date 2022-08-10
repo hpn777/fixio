@@ -12,6 +12,8 @@ const headerFields: Record<any, boolean> = {
     [keyvals.TargetCompID]: true,
     [keyvals.MsgSeqNum]: true,
     [keyvals.ApplVerID]: true,
+    [keyvals.SenderLocationID]: true,
+    [keyvals.LastMsgSeqNumProcessed]: true
 }
 
 export let SOHCHAR = String.fromCharCode(1);
@@ -94,33 +96,33 @@ export function convertToFIX(
     const headermsgarr: Array<unknown> = [];
     const bodymsgarr: Array<unknown> = [];
 
-    headermsgarr.push('35=' + msg['35'], SOHCHAR);
+    headermsgarr.push(keyvals.MsgType, '=', msg[keyvals.MsgType], SOHCHAR);
 
-    headermsgarr.push('49=' + (msg['49'] || senderCompID), SOHCHAR);
+    headermsgarr.push(keyvals.SenderCompID, '=', msg[keyvals.SenderCompID] || senderCompID, SOHCHAR);
 
-    headermsgarr.push('56=' + (msg['56'] || targetCompID), SOHCHAR);
+    headermsgarr.push(keyvals.TargetCompID, '=', msg[keyvals.TargetCompID] || targetCompID, SOHCHAR);
 
     if (options.appVerID) {
-        headermsgarr.push('1128=' + (msg['1128'] || options.appVerID), SOHCHAR);
+        headermsgarr.push(keyvals.ApplVerID, '=', msg[keyvals.ApplVerID] || options.appVerID, SOHCHAR);
     }
 
     if (options.senderSubID) {
-        headermsgarr.push('50=' + (msg['50'] || options.senderSubID), SOHCHAR);
+        headermsgarr.push(keyvals.SenderSubID, '=', msg[keyvals.SenderSubID] || options.senderSubID, SOHCHAR);
     }
 
     if (options.targetSubID) {
-        headermsgarr.push('57=' + (msg['57'] || options.targetSubID), SOHCHAR);
+        headermsgarr.push(keyvals.SenderSubID, '=', msg[keyvals.SenderSubID] || options.targetSubID, SOHCHAR);
     }
     if (options.senderLocationID) {
-        headermsgarr.push('142=' + (msg['142'] || options.senderLocationID), SOHCHAR);
+        headermsgarr.push(keyvals.SenderLocationID, '=', msg[keyvals.SenderLocationID] || options.senderLocationID, SOHCHAR);
     }
 
-    headermsgarr.push('34=' + outgoingSeqNum, SOHCHAR);
+    headermsgarr.push(keyvals.MsgSeqNum, '=', outgoingSeqNum, SOHCHAR);
 
-    headermsgarr.push('52=' + timeStamp, SOHCHAR);
+    headermsgarr.push(keyvals.SendingTime, '=', timeStamp, SOHCHAR);
 
-    if(msg['369'] !== undefined){
-        headermsgarr.push('369=' + msg['369'], SOHCHAR);
+    if(msg[keyvals.LastMsgSeqNumProcessed] !== undefined){
+        headermsgarr.push(keyvals.LastMsgSeqNumProcessed, '=', msg[keyvals.LastMsgSeqNumProcessed], SOHCHAR);
     }
     
     for (const [tag, item] of Object.entries(msg)) {
@@ -147,8 +149,8 @@ export function convertToFIX(
     const bodymsg = bodymsgarr.join('');
 
     const outmsgarr: Array<unknown> = [];
-    outmsgarr.push('8=', msg['8'] || fixVersion, SOHCHAR);
-    outmsgarr.push('9=', (headermsg.length + bodymsg.length), SOHCHAR);
+    outmsgarr.push(keyvals.BeginString, '=', msg['8'] || fixVersion, SOHCHAR);
+    outmsgarr.push(keyvals.BodyLength, '=', (headermsg.length + bodymsg.length), SOHCHAR);
     outmsgarr.push(headermsg);
     outmsgarr.push(bodymsg);
 
