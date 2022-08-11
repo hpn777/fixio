@@ -129,7 +129,7 @@ function convertToKeyvals(msg) {
         let key;
         let value;
         while (true) {
-            if (msg[i] === '=') {
+            if (key === undefined && msg[i] === '=') {
                 key = msg.substr(cursor, attrLength);
                 attrLength = 0;
                 cursor = i + 1;

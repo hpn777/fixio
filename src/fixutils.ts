@@ -171,7 +171,7 @@ function convertToKeyvals(msg: string): Array<[any, unknown]> {
         let key: any | undefined
         let value: unknown
         while (true) {
-            if (msg[i] === '=') {
+            if (key === undefined && msg[i] === '=') {
                 key = msg.substr(cursor, attrLength) as any
                 attrLength = 0
                 cursor = i + 1
