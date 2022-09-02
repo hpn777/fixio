@@ -275,6 +275,7 @@ function repeatingGroupToMap(
         let index = 0
 
         while (true) {
+            if(k >= msgKeyvals.length) break
             if (repeatinGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatinGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             } else {
