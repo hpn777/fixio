@@ -194,7 +194,6 @@ class FIXSession extends events_1.EventEmitter {
         this.send({
             [fixtagnums_1.keyvals.MsgType]: 5,
             [fixtagnums_1.keyvals.Text]: logoffReason,
-            [fixtagnums_1.keyvals.NextExpectedMsgSeqNum]: this.#session.incomingSeqNum,
         });
         this.#session.isLoggedIn = false;
         this.#isLogoutRequested = true;

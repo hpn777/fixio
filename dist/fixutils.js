@@ -63,6 +63,24 @@ function convertMapToFIX(map) {
     });
 }
 exports.convertMapToFIX = convertMapToFIX;
+let grupToFix = (tag, item, bodymsgarr) => {
+    bodymsgarr.push(tag, '=', item.length, exports.SOHCHAR);
+    for (const group of item) {
+        if (fixSchema_1.fixRepeatingGroups[tag]) {
+            fixSchema_1.fixRepeatingGroups[tag].forEach(x => {
+                if (Array.isArray(group[x])) {
+                    grupToFix(x, group[x], bodymsgarr);
+                }
+                else if (group[x] !== undefined) {
+                    bodymsgarr.push(x, '=', group[x], exports.SOHCHAR);
+                }
+            });
+        }
+        else {
+            throw (new Error('Schema definition for the group is not defined.'));
+        }
+    }
+};
 function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, outgoingSeqNum, options) {
     delete msg[fixtagnums_1.keyvals.BodyLength];
     delete msg[fixtagnums_1.keyvals.CheckSum];
@@ -91,17 +109,7 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
     for (const [tag, item] of Object.entries(msg)) {
         if (headerFields[tag] !== true) {
             if (Array.isArray(item)) {
-                bodymsgarr.push(tag, '=', item.length, exports.SOHCHAR);
-                for (const group of item) {
-                    if (fixSchema_1.fixRepeatingGroups[tag]) {
-                        fixSchema_1.fixRepeatingGroups[tag].forEach(x => {
-                            bodymsgarr.push(x, '=', group[x], exports.SOHCHAR);
-                        });
-                    }
-                    else {
-                        throw (new Error('Schema definition for the group is not defined.'));
-                    }
-                }
+                grupToFix(tag, item, bodymsgarr);
             }
             else {
                 bodymsgarr.push(tag, '=', item, exports.SOHCHAR);
@@ -155,30 +163,26 @@ function convertToKeyvals(msg) {
 }
 function convertToMap(msg) {
     const fix = {};
-    const keyvals = convertToKeyvals(msg);
+    const msgKeyvals = convertToKeyvals(msg);
     let i = 0;
-    while (i < keyvals.length) {
-        const pair = keyvals[i];
-        if (pair.length === 2) {
-            const repeatinGroup = fixSchema_1.fixRepeatingGroups[pair[0]];
-            if (!repeatinGroup) {
-                fix[pair[0]] = pair[1];
-                i++;
+    while (i < msgKeyvals.length) {
+        const pair = msgKeyvals[i];
+        const repeatinGroup = fixSchema_1.fixRepeatingGroups[pair[0]];
+        if (!repeatinGroup) {
+            fix[pair[0]] = pair[1];
+            i++;
+        }
+        else {
+            const nr = Number(pair[1]);
+            if (!isNaN(nr)) {
+                const response = repeatingGroupToMap(repeatinGroup, nr, msgKeyvals.slice(i + 1));
+                fix[pair[0]] = response.repeatingGroup;
+                i += (1 + response.length);
             }
             else {
-                const nr = Number(pair[1]);
-                if (!isNaN(nr)) {
-                    const response = repeatingGroupToMap(repeatinGroup, nr, keyvals.slice(i + 1));
-                    fix[pair[0]] = response.repeatingGroup;
-                    i += (1 + response.length);
-                }
-                else {
-                    throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid');
-                }
+                throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid');
             }
         }
-        else
-            i++;
     }
     return fix;
 }
@@ -219,12 +223,29 @@ function repeatingGroupToMap(repeatinGroup, nr, msgKeyvals) {
         const group = {};
         let index = 0;
         while (true) {
+            if (k >= msgKeyvals.length)
+                break;
+            const pair = msgKeyvals[k];
             if (repeatinGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatinGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             }
             else {
-                group[msgKeyvals[k][0]] = msgKeyvals[k][1];
-                ++k;
+                const repeatinGroup = fixSchema_1.fixRepeatingGroups[pair[0]];
+                if (!repeatinGroup) {
+                    group[pair[0]] = pair[1];
+                    ++k;
+                }
+                else {
+                    const nr = Number(pair[1]);
+                    if (!isNaN(nr)) {
+                        const response = repeatingGroupToMap(repeatinGroup, nr, msgKeyvals.slice(k + 1));
+                        group[pair[0]] = response.repeatingGroup;
+                        k += (1 + response.length);
+                    }
+                    else {
+                        throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid');
+                    }
+                }
                 ++index;
             }
         }
@@ -233,7 +254,7 @@ function repeatingGroupToMap(repeatinGroup, nr, msgKeyvals) {
     }
     return response;
 }
-function repeatingGroupToJSON(repeatingGroup, nr, keyvalPairs) {
+function repeatingGroupToJSON(repeatingGroup, nr, msgKeyvals) {
     const response = {
         repeatingGroup: [],
         length: 0,
@@ -242,12 +263,29 @@ function repeatingGroupToJSON(repeatingGroup, nr, keyvalPairs) {
         const group = {};
         let index = 0;
         while (true) {
-            if (repeatingGroup.indexOf(keyvalPairs[k][0]) === -1 || (repeatingGroup[0] === keyvalPairs[k][0] && index !== 0)) {
+            if (k >= msgKeyvals.length)
+                break;
+            const pair = msgKeyvals[k];
+            if (repeatingGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatingGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             }
             else {
-                group[(0, fixtagnums_1.resolveKey)(keyvalPairs[k][0])] = keyvalPairs[k][1];
-                ++k;
+                const repeatinGroup = fixSchema_1.fixRepeatingGroups[pair[0]];
+                if (!repeatinGroup) {
+                    group[(0, fixtagnums_1.resolveKey)(pair[0])] = pair[1];
+                    ++k;
+                }
+                else {
+                    const nr = Number(pair[1]);
+                    if (!isNaN(nr)) {
+                        const response = repeatingGroupToJSON(repeatinGroup, nr, msgKeyvals.slice(k + 1));
+                        group[pair[0]] = response.repeatingGroup;
+                        k += (1 + response.length);
+                    }
+                    else {
+                        throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid');
+                    }
+                }
                 ++index;
             }
         }
