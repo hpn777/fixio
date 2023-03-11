@@ -1,6 +1,4 @@
 import { checksum } from '../fixutils'
-import { Observable, from } from 'rxjs'
-import unknown from 'lodash.throttle'
 
 //static vars
 const SOHCHAR = String.fromCharCode(1)

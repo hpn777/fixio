@@ -1,12 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FIXSession = void 0;
-const tslib_1 = require("tslib");
 const fs_1 = require("fs");
 const readline_1 = require("readline");
-const node_persist_1 = tslib_1.__importDefault(require("node-persist"));
 const events_1 = require("events");
-const lodash_throttle_1 = tslib_1.__importDefault(require("lodash.throttle"));
 const fixutils_1 = require("../fixutils");
 const fixtagnums_1 = require("../resources/fixtagnums");
 const sessions = {};
@@ -14,10 +11,9 @@ class FIXSession extends events_1.EventEmitter {
     #fixClient;
     #isAcceptor;
     #session = {
-        'incomingSeqNum': 1,
-        'outgoingSeqNum': 1,
+        incomingSeqNum: 1,
+        outgoingSeqNum: 1,
     };
-    #saveSession = (0, lodash_throttle_1.default)(() => node_persist_1.default.setItemSync(this.#key, this.#session), 100);
     #timeOfLastIncoming = new Date().getTime();
     #heartbeatIntervalID;
     #timeOfLastOutgoing = new Date().getTime();
@@ -25,7 +21,7 @@ class FIXSession extends events_1.EventEmitter {
     #testRequestID = 1;
     #isResendRequested = false;
     #isLogoutRequested = false;
-    decode = (raw) => {
+    decode = async (raw) => {
         this.#timeOfLastIncoming = new Date().getTime();
         const fix = (0, fixutils_1.convertToMap)(raw);
         const msgType = fix[fixtagnums_1.keyvals.MsgType];
@@ -48,7 +44,6 @@ class FIXSession extends events_1.EventEmitter {
                     const error = `[ERROR] Session not authentic: ${raw} `;
                     throw new Error(error);
                 }
-                this.createsessionStorage(this.#senderCompID, this.#targetCompID);
                 if (this.#resetSeqNumOnReconect) {
                     this.#session = {
                         incomingSeqNum: 1,
@@ -56,7 +51,7 @@ class FIXSession extends events_1.EventEmitter {
                     };
                 }
                 else {
-                    this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID);
+                    this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
                 }
             }
             const heartbeatInMilliSeconds = parseInt(fix[fixtagnums_1.keyvals.HeartBtInt] ?? this.#defaultHeartbeatSeconds, 10) * 1000;
@@ -117,7 +112,7 @@ class FIXSession extends events_1.EventEmitter {
                 break;
             case '4':
                 const resetSeqNo = Number(fix[fixtagnums_1.keyvals.NewSeqNo]);
-                if (resetSeqNo !== NaN) {
+                if (!Number.isNaN(resetSeqNo)) {
                     if (resetSeqNo >= this.#session.incomingSeqNum) {
                         if (resetSeqNo > this.#requestResendTargetSeqNum && this.#requestResendRequestedSeqNum !== this.#requestResendTargetSeqNum) {
                             this.#session.incomingSeqNum = this.#requestResendRequestedSeqNum + 1;
@@ -155,11 +150,10 @@ class FIXSession extends events_1.EventEmitter {
                 });
                 break;
         }
-        this.#saveSession();
         return fix;
     };
-    resetFIXSession = (newSession = {}) => {
-        this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID);
+    resetFIXSession = async (newSession = {}) => {
+        this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
         if (newSession.incomingSeqNum) {
             this.#session.incomingSeqNum = newSession.incomingSeqNum;
         }
@@ -172,9 +166,8 @@ class FIXSession extends events_1.EventEmitter {
         }
         catch {
         }
-        this.#saveSession();
     };
-    logon = (logonmsg = {
+    logon = async (logonmsg = {
         [fixtagnums_1.keyvals.MsgType]: 'A',
         [fixtagnums_1.keyvals.EncryptMethod]: '0',
         [fixtagnums_1.keyvals.HeartBtInt]: '10',
@@ -186,7 +179,7 @@ class FIXSession extends events_1.EventEmitter {
             };
         }
         else {
-            this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID);
+            this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
         }
         this.send(logonmsg);
     };
@@ -216,15 +209,14 @@ class FIXSession extends events_1.EventEmitter {
         if (!replay) {
             this.#timeOfLastOutgoing = new Date().getTime();
             this.#session.outgoingSeqNum++;
-            this.logToFile(outmsg);
-            this.#saveSession();
+            this.logToFile(outmsg, this.#senderCompID, this.#targetCompID);
         }
     };
     #logfilename;
     #file = null;
-    logToFile = (raw) => {
+    logToFile = (raw, senderCompID, targetCompID) => {
         if (this.#file === null) {
-            this.#logfilename = this.#logFolder + '/' + this.#key + '.log';
+            let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`;
             try {
                 (0, fs_1.mkdirSync)(this.#logFolder);
             }
@@ -232,12 +224,12 @@ class FIXSession extends events_1.EventEmitter {
             }
             try {
                 if (this.#resetSeqNumOnReconect) {
-                    (0, fs_1.unlinkSync)(this.#logfilename);
+                    (0, fs_1.unlinkSync)(fileName);
                 }
             }
             catch {
             }
-            this.#file = (0, fs_1.createWriteStream)(this.#logfilename, {
+            this.#file = (0, fs_1.createWriteStream)(fileName, {
                 'flags': 'a',
                 'mode': 0o666,
             });
@@ -328,6 +320,41 @@ class FIXSession extends events_1.EventEmitter {
             });
         }
     };
+    retriveSession = async (senderCompID, targetCompID) => {
+        let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`;
+        return new Promise((resolve, reject) => {
+            if ((0, fs_1.existsSync)(fileName)) {
+                const reader = (0, fs_1.createReadStream)(fileName, {
+                    'flags': 'r',
+                    'encoding': 'binary',
+                    'mode': 0o666
+                });
+                const lineReader = (0, readline_1.createInterface)({
+                    input: reader,
+                });
+                let incomingSeqNum = 0;
+                let outgoingSeqNum = 0;
+                lineReader.on('line', (line) => {
+                    const _fix = (0, fixutils_1.convertToMap)(line);
+                    incomingSeqNum = Number(_fix[369]);
+                    outgoingSeqNum = Number(_fix[34]);
+                });
+                lineReader.on('close', () => {
+                    resolve({
+                        incomingSeqNum: ++incomingSeqNum,
+                        outgoingSeqNum: ++outgoingSeqNum
+                    });
+                    reader.close();
+                });
+            }
+            else {
+                resolve({
+                    incomingSeqNum: 1,
+                    outgoingSeqNum: 1
+                });
+            }
+        });
+    };
     #fixVersion;
     #senderCompID;
     #senderSubID;
@@ -338,30 +365,14 @@ class FIXSession extends events_1.EventEmitter {
     #logFolder;
     #isDuplicateFunc;
     #isAuthenticFunc;
-    #retriveSession;
     #resetSeqNumOnReconect;
     #defaultHeartbeatSeconds;
     #sendHeartbeats;
     #expectHeartbeats;
     #respondToLogon;
     #key;
-    createsessionStorage = (senderCompID, targetCompID) => {
-        this.#key = `${senderCompID}-${targetCompID}`;
-        this.#retriveSession = ((senderId, targetId) => {
-            this.#key = senderId + '-' + targetId;
-            sessions[this.#key] = node_persist_1.default.getItemSync(this.#key) ?? {
-                incomingSeqNum: 1,
-                outgoingSeqNum: 1,
-            };
-            sessions[this.#key].isLoggedIn = false;
-            return sessions[this.#key];
-        });
-    };
     constructor(fixClient, isAcceptor, options) {
         super();
-        node_persist_1.default.init({
-            dir: options.logFolder ?? './storage'
-        });
         this.#fixClient = fixClient;
         this.#isAcceptor = isAcceptor;
         this.#fixVersion = options.fixVersion;
@@ -370,16 +381,6 @@ class FIXSession extends events_1.EventEmitter {
         this.#targetCompID = options.targetCompID;
         this.#targetSubID = options.targetSubID;
         this.#senderLocationID = options.senderLocationID;
-        this.#retriveSession = () => {
-            return {
-                incomingSeqNum: 1,
-                outgoingSeqNum: 1,
-                isLoggedIn: false
-            };
-        };
-        if (options.senderCompID && options.targetCompID) {
-            this.createsessionStorage(options.senderCompID, options.targetCompID);
-        }
         this.#logFolder = options.logFolder ?? './storage';
         this.#key = `${this.#senderCompID}-${this.#targetCompID}`;
         this.#isDuplicateFunc = options.isDuplicateFunc ?? ((senderId, targetId) => sessions[`${senderId} -${targetId} `]?.isLoggedIn ?? false);

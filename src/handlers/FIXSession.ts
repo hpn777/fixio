@@ -1,9 +1,6 @@
-import { mkdirSync, createWriteStream, unlinkSync, createReadStream, WriteStream } from 'fs'
+import { mkdirSync, createWriteStream, unlinkSync, createReadStream, WriteStream, existsSync } from 'fs'
 import { createInterface as createReadlineInterface } from 'readline'
-// @ts-ignore no type defs for v2
-import storage from 'node-persist'
 import { EventEmitter } from 'events'
-import throttle from 'lodash.throttle'
 import { convertToMap, convertToFIX, getUTCTimeStamp } from '../fixutils'
 import { keyvals } from '../resources/fixtagnums'
 import type { Socket } from 'net'
@@ -45,11 +42,9 @@ export class FIXSession extends EventEmitter {
     #isAcceptor: boolean
 
     #session: Session = {
-        'incomingSeqNum': 1,
-        'outgoingSeqNum': 1,
+        incomingSeqNum: 1,
+        outgoingSeqNum: 1,
     }
-
-    #saveSession = throttle(() => storage.setItemSync(this.#key, this.#session), 100)
 
     #timeOfLastIncoming = new Date().getTime();
 
@@ -65,7 +60,7 @@ export class FIXSession extends EventEmitter {
 
     #isLogoutRequested = false
 
-    public readonly decode = (raw: string) => {
+    public readonly decode = async (raw: string) => {
         this.#timeOfLastIncoming = new Date().getTime();
 
         const fix = convertToMap(raw);
@@ -100,7 +95,6 @@ export class FIXSession extends EventEmitter {
                     const error = `[ERROR] Session not authentic: ${raw} `;
                     throw new Error(error)
                 }
-                this.createsessionStorage(this.#senderCompID, this.#targetCompID)
                 //==Sync sequence numbers from data store
                 if (this.#resetSeqNumOnReconect) {
                     this.#session = {
@@ -108,7 +102,7 @@ export class FIXSession extends EventEmitter {
                         outgoingSeqNum: 1
                     }
                 } else {
-                    this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)
+                    this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID)
                 }
             } //End Process acceptor specific logic==
 
@@ -195,7 +189,7 @@ export class FIXSession extends EventEmitter {
             case '4':
                 //==Process sequence-reset
                 const resetSeqNo = Number(fix[keyvals.NewSeqNo])
-                if (resetSeqNo !== NaN) {
+                if (!Number.isNaN(resetSeqNo)) {
                     if (resetSeqNo >= this.#session.incomingSeqNum) {
                         if (resetSeqNo > this.#requestResendTargetSeqNum && this.#requestResendRequestedSeqNum !== this.#requestResendTargetSeqNum) {
                             this.#session.incomingSeqNum = this.#requestResendRequestedSeqNum + 1
@@ -236,13 +230,11 @@ export class FIXSession extends EventEmitter {
                 break;
         }
 
-        this.#saveSession()
-
         return fix
     }
 
-    public readonly resetFIXSession = (newSession: Partial<Session> = {}) => {
-        this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)
+    public readonly resetFIXSession = async (newSession: Partial<Session> = {}) => {
+        this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID)
 
         if (newSession.incomingSeqNum) {
             this.#session.incomingSeqNum = newSession.incomingSeqNum
@@ -258,11 +250,9 @@ export class FIXSession extends EventEmitter {
         } catch {
             // pass
         }
-
-        this.#saveSession()
     }
 
-    public readonly logon = (
+    public readonly logon = async (
         logonmsg: Record<any, unknown> = {
             [keyvals.MsgType]: 'A',
             [keyvals.EncryptMethod]: '0',
@@ -276,7 +266,7 @@ export class FIXSession extends EventEmitter {
                 outgoingSeqNum: 1,
             }
         } else {
-            this.#session = this.#retriveSession(this.#senderCompID, this.#targetCompID)
+            this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID)
         }
         this.send(logonmsg)
     }
@@ -323,8 +313,7 @@ export class FIXSession extends EventEmitter {
         if (!replay) {
             this.#timeOfLastOutgoing = new Date().getTime()
             this.#session.outgoingSeqNum++
-            this.logToFile(outmsg)
-            this.#saveSession()
+            this.logToFile(outmsg, this.#senderCompID, this.#targetCompID)
         }
     }
 
@@ -332,44 +321,44 @@ export class FIXSession extends EventEmitter {
 
     #file: WriteStream | null = null
 
-    public readonly logToFile = (raw: string) => {
+    public readonly logToFile = (raw: string, senderCompID: any, targetCompID: any) => {
         if (this.#file === null) {
-            this.#logfilename = this.#logFolder + '/' + this.#key + '.log';
+          let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`
 
-            try {
-                mkdirSync(this.#logFolder)
-            } catch {
-                // pass
-            }
+          try {
+              mkdirSync(this.#logFolder)
+          } catch {
+              // pass
+          }
 
-            try {
-                if (this.#resetSeqNumOnReconect) {
-                    unlinkSync(this.#logfilename);
-                }
-            } catch {
-                // pass
-            }
+          try {
+              if (this.#resetSeqNumOnReconect) {
+                  unlinkSync(fileName);
+              }
+          } catch {
+              // pass
+          }
 
-            this.#file = createWriteStream(
-                this.#logfilename,
-                {
-                    'flags': 'a',
-                    'mode': 0o666,
-                },
-            )
-            this.#file.on('error', (error) => {
-                this.#fixClient.connection?.emit('error', error)
-            })
+          this.#file = createWriteStream(
+              fileName,
+              {
+                  'flags': 'a',
+                  'mode': 0o666,
+              },
+          )
+          this.#file.on('error', (error) => {
+              this.#fixClient.connection?.emit('error', error)
+          })
 
-            if (this.#fixClient.connection) {
-                this.#fixClient.connection.on('close', () => {
-                    this.#file?.close()
-                    this.#file = null
-                })
-            }
-        }
+          if (this.#fixClient.connection) {
+              this.#fixClient.connection.on('close', () => {
+                  this.#file?.close()
+                  this.#file = null
+              })
+          }
+      }
 
-        this.#file.write(raw + '\n');
+      this.#file.write(raw + '\n');
     }
 
     #requestResendRequestedSeqNum = 0
@@ -457,6 +446,44 @@ export class FIXSession extends EventEmitter {
         }
     }
 
+    public readonly retriveSession = async (senderCompID: any, targetCompID: any):Promise<Session> => {
+      let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`
+      return new Promise((resolve, reject)=>{
+        if(existsSync(fileName)){
+          const reader = createReadStream(fileName, {
+            'flags': 'r',
+            'encoding': 'binary',
+            'mode': 0o666
+          })
+          const lineReader = createReadlineInterface({
+            input: reader,
+          })
+    
+          let incomingSeqNum = 0
+          let outgoingSeqNum = 0
+
+          lineReader.on('line', (line) => {
+            const _fix = convertToMap(line)
+            incomingSeqNum = Number(_fix[369])
+            outgoingSeqNum = Number(_fix[34])
+          })
+          lineReader.on('close', () => {
+            resolve({
+              incomingSeqNum: ++incomingSeqNum,
+              outgoingSeqNum: ++outgoingSeqNum
+            })
+            reader.close()
+          })
+        }
+        else{
+          resolve({
+            incomingSeqNum: 1,
+            outgoingSeqNum: 1
+          })
+        }
+      })
+  }
+
     #fixVersion: Required<FIXSessionOptions>['fixVersion']
 
     #senderCompID: Required<FIXSessionOptions>['senderCompID']
@@ -477,8 +504,6 @@ export class FIXSession extends EventEmitter {
 
     #isAuthenticFunc: Required<FIXSessionOptions>['isAuthenticFunc']
 
-    #retriveSession: Required<FIXSessionOptions>['retriveSession']
-
     #resetSeqNumOnReconect: Required<FIXSessionOptions>['resetSeqNumOnReconect']
 
     #defaultHeartbeatSeconds: Required<FIXSessionOptions>['defaultHeartbeatSeconds']
@@ -490,26 +515,9 @@ export class FIXSession extends EventEmitter {
     #respondToLogon: Required<FIXSessionOptions>['respondToLogon']
 
     #key: string
-    private createsessionStorage = (senderCompID: any, targetCompID: any) => {
-        this.#key = `${senderCompID}-${targetCompID}`
-        this.#retriveSession = ((senderId, targetId) => {
-            this.#key = senderId + '-' + targetId
 
-            sessions[this.#key] = storage.getItemSync(this.#key) ?? {
-                incomingSeqNum: 1,
-                outgoingSeqNum: 1,
-            }
-
-            sessions[this.#key].isLoggedIn = false //default is always logged out
-
-            return sessions[this.#key]
-        })
-    }
     constructor(fixClient: FIXConnection, isAcceptor: boolean, options: FIXSessionOptions) {
         super()
-        storage.init({
-            dir: options.logFolder ?? './storage'
-        })
         this.#fixClient = fixClient
         this.#isAcceptor = isAcceptor
         this.#fixVersion = options.fixVersion
@@ -518,18 +526,6 @@ export class FIXSession extends EventEmitter {
         this.#targetCompID = options.targetCompID
         this.#targetSubID = options.targetSubID
         this.#senderLocationID = options.senderLocationID
-
-        this.#retriveSession = () => {
-            return {
-                incomingSeqNum: 1,
-                outgoingSeqNum: 1,
-                isLoggedIn: false
-            }
-        }
-
-        if (options.senderCompID && options.targetCompID) {
-            this.createsessionStorage(options.senderCompID, options.targetCompID)
-        }
 
         this.#logFolder = options.logFolder ?? './storage'
 

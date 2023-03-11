@@ -1,7 +1,7 @@
 const { FIXClient } = require('../dist/FIXClient')
 const fixutil = require('../dist/fixutils')
 
-const client = new FIXClient("FIXT.1.1", "initiator", "acceptor", {"autologon": false})
+const client = new FIXClient("FIXT.1.1", "initiator", "acceptor", {autologon: false, resetSeqNumOnReconect: false})
 
 client.jsonIn$.subscribe(json => {
     console.log('initiator jsonIn', json)
@@ -31,18 +31,11 @@ client.logon$.subscribe(msg => {
     })
 })
 
-client.send({
-    '35': 'A',
-    '98': '0',
-    '108': '10',
-    "1137": "9",
-    "95": 8,
-    "96": '11111111'
-})
+client.logon()
 
-var testData = '8=FIX.4.49=14835=D34=108049=TESTBUY152=20180920-18:14:19.50856=TESTSELL111=63673064027889863415=USD21=238=700040=154=155=MSFT60=20180920-18:14:19.49210=092'
-var data = fixutil.convertToMap(testData)
-setTimeout(() =>{
-data['38'] = 100000000001
-    client.send(data)
-}, 1000)
+// var testData = '8=FIX.4.49=14835=D34=108049=TESTBUY152=20180920-18:14:19.50856=TESTSELL111=63673064027889863415=USD21=238=700040=154=155=MSFT60=20180920-18:14:19.49210=092'
+// var data = fixutil.convertToMap(testData)
+// setTimeout(() =>{
+// data['38'] = 100000000001
+//     client.send(data)
+// }, 1000)
