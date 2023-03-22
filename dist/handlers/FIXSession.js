@@ -21,7 +21,7 @@ class FIXSession extends events_1.EventEmitter {
     #testRequestID = 1;
     #isResendRequested = false;
     #isLogoutRequested = false;
-    decode = (raw) => {
+    decode = async (raw) => {
         this.#timeOfLastIncoming = new Date().getTime();
         const fix = (0, fixutils_1.convertToMap)(raw);
         const msgType = fix[fixtagnums_1.keyvals.MsgType];
@@ -51,7 +51,7 @@ class FIXSession extends events_1.EventEmitter {
                     };
                 }
                 else {
-                    this.#session = this.retriveSession(this.#senderCompID, this.#targetCompID);
+                    this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
                 }
             }
             const heartbeatInMilliSeconds = parseInt(fix[fixtagnums_1.keyvals.HeartBtInt] ?? this.#defaultHeartbeatSeconds, 10) * 1000;

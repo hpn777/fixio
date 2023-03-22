@@ -3,11 +3,11 @@ const fixutil = require('../dist/fixutils')
 
 const client = new FIXClient("FIXT.1.1", "initiator", "acceptor", {autologon: false, resetSeqNumOnReconect: true})
 
-client.jsonIn$.subscribe(json => {
-    console.log('initiator jsonIn', json)
+client.dataIn$.subscribe(data => {
+    console.log('initiator jsonIn', data)
 })
-client.jsonOut$.subscribe(json => {
-    console.log('initiator jsonOut', json)
+client.dataOut$.subscribe(data => {
+    console.log('initiator jsonOut', data)
 })
 client.error$.subscribe(e => console.log(e))
 client.connect(12345, 'localhost')

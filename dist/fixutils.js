@@ -142,7 +142,7 @@ function convertToKeyvals(msg) {
                 attrLength = 0;
                 cursor = i + 1;
             }
-            else if (msg[i] === exports.SOHCHAR) {
+            else if (msg[i] === exports.SOHCHAR || msg[i] === undefined) {
                 value = msg.substr(cursor, attrLength - 1);
                 cursor = i + 1;
                 break;

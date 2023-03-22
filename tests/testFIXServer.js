@@ -7,11 +7,11 @@ const serverOptions = {
 }
 
 const server = new FIXServer(serverOptions)
-server.jsonIn$.subscribe(json => {
-    console.log('jsonIn', json)
+server.dataIn$.subscribe(data => {
+    console.log('dataIn', data)
 })
-server.jsonOut$.subscribe(json => {
-    console.log('jsonOut', json)
+server.dataIn$.subscribe(data => {
+    console.log('dataOut', data)
 })
 server.error$.subscribe(e => console.error(e))
 server.listen()

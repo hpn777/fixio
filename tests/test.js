@@ -9,9 +9,9 @@ var i = 1
 
 console.time('perf')
 
-for (k = 0; k < 1000000; k++) {
+for (k = 0; k < 100000; k++) {
     let dupa = fixutils.convertToMap(testData)
-    i += dupa.length
+    i += 1//dupa.length
 }
 console.timeEnd('perf')
 console.log(i)

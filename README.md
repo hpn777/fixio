@@ -21,7 +21,7 @@ API
 ## Server:
 
 ```javascript
-const { FIXServer } = require("fixio")
+const { FIXServer, fixutil } = require("fixio")
 
 const serverOptions = {
   port: 1234,
@@ -29,11 +29,11 @@ const serverOptions = {
 }
 
 const server = new FIXServer(serverOptions)
-server.jsonIn$.subscribe(json => {
-    console.log('jsonIn', json)
+server.fixIn$.subscribe(fix => {
+    console.log('jsonIn', fixutil.convertToJSON(fix))
 })
-server.jsonOut$.subscribe(json => {
-    console.log('jsonOut', json)
+server.fixOut$.subscribe(fix => {
+    console.log('jsonOut', fixutil.convertToJSON(fix))
 })
 server.error$.subscribe(e => console.error(e))
 server.listen()
@@ -47,11 +47,11 @@ const { FIXClient, fixutil } = require("fixio")
 const client = new FIXClient("FIX.4.4", "initiator", "acceptor", {})
 
 client.connect(1234, 'localhost')
-client.jsonIn$.subscribe(json => {
-    console.log('initiator jsonIn', json)
+client.fixIn$.subscribe(fix => {
+    console.log('initiator jsonIn', fixutil.convertToJSON(fix))
 })
-client.jsonOut$.subscribe(json => {
-    console.log('initiator jsonOut', json)
+client.fixOut$.subscribe(fix => {
+    console.log('initiator jsonOut', fixutil.convertToJSON(fix))
 })
 client.error$.subscribe(e => console.log(e))
 ```

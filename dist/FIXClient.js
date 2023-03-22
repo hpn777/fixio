@@ -6,7 +6,6 @@ const rxjs_1 = require("rxjs");
 const operators_1 = require("rxjs/operators");
 const net_1 = require("net");
 const tls_1 = require("tls");
-const fixutils_1 = require("./fixutils");
 const FIXSession_1 = require("./handlers/FIXSession");
 const FrameDecoder_1 = require("./handlers/FrameDecoder");
 exports.fixutil = tslib_1.__importStar(require("./fixutils"));
@@ -19,10 +18,8 @@ class FIXClient {
     logoff$ = new rxjs_1.Subject;
     fixIn$ = new rxjs_1.Subject();
     dataIn$ = new rxjs_1.Subject();
-    jsonIn$ = new rxjs_1.Subject();
     fixOut$ = new rxjs_1.Subject();
     dataOut$ = new rxjs_1.Subject();
-    jsonOut$ = new rxjs_1.Subject();
     end$ = new rxjs_1.Subject;
     close$ = new rxjs_1.Subject;
     error$ = new rxjs_1.Subject;
@@ -49,7 +46,6 @@ class FIXClient {
             (0, rxjs_1.fromEvent)(this.#fixSession, 'dataOut').subscribe(this.dataOut$);
             const fixOut$ = (0, rxjs_1.fromEvent)(this.#fixSession, 'fixOut').pipe((0, operators_1.share)());
             fixOut$.subscribe(this.fixOut$);
-            fixOut$.pipe((0, operators_1.map)(fixutils_1.convertToJSON)).subscribe(this.jsonOut$);
         }
         (0, rxjs_1.fromEvent)(this.connection, 'connect').subscribe(this.connect$);
         (0, rxjs_1.fromEvent)(this.connection, 'error').subscribe(this.error$);
@@ -63,9 +59,8 @@ class FIXClient {
         const dataIn$ = fixIn$.pipe((0, operators_1.map)((msg) => this.#fixSession.decode(msg)), (0, operators_1.catchError)((ex) => {
             this.connection?.emit('error', ex);
             return rxjs_1.NEVER;
-        }), (0, operators_1.share)());
+        }), (0, operators_1.mergeAll)(), (0, operators_1.share)());
         dataIn$.subscribe(this.dataIn$);
-        fixIn$.pipe((0, operators_1.map)(fixutils_1.convertToJSON)).subscribe(this.jsonIn$);
     };
     constructor(fixVersion, senderCompID, targetCompID, opt) {
         this.#fixSession = new FIXSession_1.FIXSession(this, false, {

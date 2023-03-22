@@ -186,7 +186,7 @@ function convertToKeyvals(msg: string): Array<[any, unknown]> {
                 attrLength = 0
                 cursor = i + 1
             }
-            else if (msg[i] === SOHCHAR) {
+            else if (msg[i] === SOHCHAR || msg[i] === undefined) {
                 value = msg.substr(cursor, attrLength - 1)
                 cursor = i + 1
                 break;
@@ -212,7 +212,6 @@ function convertToKeyvals(msg: string): Array<[any, unknown]> {
 export function convertToMap(msg: string) {
     const fix: Record<number, unknown> = {}
     const msgKeyvals = convertToKeyvals(msg)
-
     let i = 0;
     while (i < msgKeyvals.length) {
         const pair = msgKeyvals[i]
@@ -238,7 +237,6 @@ export function convertToMap(msg: string) {
 export function convertToJSON(msg: string): Record<any, unknown> {
     const fix: Record<any, unknown> = {}
     const msgKeyvals = convertToKeyvals(msg)
-
     let i = 0;
     while (i < msgKeyvals.length) {
         const [key, value] = msgKeyvals[i]

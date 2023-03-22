@@ -1,5 +1,5 @@
 import { Subject, fromEvent, NEVER } from 'rxjs'
-import { tap, map, share, catchError, mergeMap } from 'rxjs/operators'
+import { tap, map, share, catchError, mergeMap, mergeAll } from 'rxjs/operators'
 import { TcpNetConnectOpts, createServer } from 'net'
 import { convertToJSON } from './fixutils'
 import { FrameDecoder } from './handlers/FrameDecoder'
@@ -24,11 +24,11 @@ export class FIXServer {
     public readonly logon$ = new Subject<string>()
     public readonly logoff$ = new Subject
     public readonly fixIn$ = new Subject<string>()
-    public readonly dataIn$ = new Subject<{ readonly msg: ReturnType<FIXSession['decode']>, readonly senderId: keyof FIXServer['fixSessions'] }>()
+    public readonly dataIn$ = new Subject<{ readonly msg: Record<number, unknown>, readonly senderId: keyof FIXServer['fixSessions'] }>()
     public readonly jsonIn$ = new Subject<{ readonly msg: ReturnType<typeof convertToJSON>, readonly senderId: keyof FIXServer['fixSessions'] }>()
     public readonly fixOut$ = new Subject<string>()
     public readonly dataOut$ = new Subject
-    public readonly jsonOut$ = new Subject<{ readonly msg: ReturnType<typeof convertToJSON>, readonly senderId: keyof FIXServer['fixSessions'] }>()
+    // public readonly jsonOut$ = new Subject<{ readonly msg: ReturnType<typeof convertToJSON>, readonly senderId: keyof FIXServer['fixSessions'] }>()
     public readonly end$ = new Subject<keyof FIXServer['fixSessions']>()
     public readonly close$ = new Subject<keyof FIXServer['fixSessions']>()
     public readonly error$ = new Subject<{ readonly error: unknown, readonly senderId: keyof FIXServer['fixSessions'] }>()
@@ -64,9 +64,9 @@ export class FIXServer {
         )
         fixOut$.subscribe(this.fixOut$)
 
-        fixOut$.pipe(
-            map((msg) => ({ msg: convertToJSON(msg), senderId })),
-        ).subscribe(this.jsonOut$ as any)
+        // fixOut$.pipe(
+        //     map((msg) => ({ msg: convertToJSON(msg), senderId })),
+        // ).subscribe(this.jsonOut$ as any)
 
         fromEvent(connection, 'end').pipe(
             tap(() => {
@@ -103,11 +103,12 @@ export class FIXServer {
         ).subscribe(this.jsonIn$)
 
         fixIn$.pipe(
-            map( (msg) => ({ msg: fixSession.decode(msg), senderId })),
+            map( async (msg) => ({ msg: await fixSession.decode(msg), senderId })),
             catchError((error: unknown) => {
                 connection.emit('error', error)
                 return NEVER
-            })
+            }),
+            mergeAll()
         ).subscribe(this.dataIn$)
     })
 

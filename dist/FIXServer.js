@@ -22,7 +22,6 @@ class FIXServer {
     jsonIn$ = new rxjs_1.Subject();
     fixOut$ = new rxjs_1.Subject();
     dataOut$ = new rxjs_1.Subject;
-    jsonOut$ = new rxjs_1.Subject();
     end$ = new rxjs_1.Subject();
     close$ = new rxjs_1.Subject();
     error$ = new rxjs_1.Subject();
@@ -46,7 +45,6 @@ class FIXServer {
         (0, rxjs_1.fromEvent)(fixSession, 'dataOut').subscribe(this.dataOut$);
         const fixOut$ = (0, rxjs_1.fromEvent)(fixSession, 'fixOut').pipe((0, operators_1.share)());
         fixOut$.subscribe(this.fixOut$);
-        fixOut$.pipe((0, operators_1.map)((msg) => ({ msg: (0, fixutils_1.convertToJSON)(msg), senderId }))).subscribe(this.jsonOut$);
         (0, rxjs_1.fromEvent)(connection, 'end').pipe((0, operators_1.tap)(() => {
             delete this.fixSessions[senderId];
         }), (0, operators_1.map)(() => senderId)).subscribe(this.end$);
@@ -62,10 +60,10 @@ class FIXServer {
             connection.emit('error', error);
             return rxjs_1.NEVER;
         })).subscribe(this.jsonIn$);
-        fixIn$.pipe((0, operators_1.map)((msg) => ({ msg: fixSession.decode(msg), senderId })), (0, operators_1.catchError)((error) => {
+        fixIn$.pipe((0, operators_1.map)(async (msg) => ({ msg: await fixSession.decode(msg), senderId })), (0, operators_1.catchError)((error) => {
             connection.emit('error', error);
             return rxjs_1.NEVER;
-        })).subscribe(this.dataIn$);
+        }), (0, operators_1.mergeAll)()).subscribe(this.dataIn$);
     });
     listen = (callback) => {
         this.server.listen(this.port, this.host, callback);
