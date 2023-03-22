@@ -448,40 +448,36 @@ export class FIXSession extends EventEmitter {
 
     public readonly retriveSession = async (senderCompID: any, targetCompID: any):Promise<Session> => {
       let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`
-      return new Promise((resolve, reject)=>{
-        if(existsSync(fileName)){
-          const reader = createReadStream(fileName, {
-            'flags': 'r',
-            'encoding': 'binary',
-            'mode': 0o666
-          })
-          const lineReader = createReadlineInterface({
-            input: reader,
-          })
-    
-          let incomingSeqNum = 0
-          let outgoingSeqNum = 0
-
-          lineReader.on('line', (line) => {
-            const _fix = convertToMap(line)
-            incomingSeqNum = Number(_fix[369])
-            outgoingSeqNum = Number(_fix[34])
-          })
-          lineReader.on('close', () => {
-            resolve({
-              incomingSeqNum: ++incomingSeqNum,
-              outgoingSeqNum: ++outgoingSeqNum
-            })
-            reader.close()
-          })
+      
+      if(existsSync(fileName)){
+        const reader = createReadStream(fileName, {
+          'flags': 'r',
+          'encoding': 'binary',
+          'mode': 0o666
+        })
+        const lineReader = createReadlineInterface({
+          input: reader,
+        })
+  
+        let incomingSeqNum = 0
+        let outgoingSeqNum = 0
+        for await (const line of lineReader) {
+          const _fix = convertToMap(line)
+          incomingSeqNum = Number(_fix[369])
+          outgoingSeqNum = Number(_fix[34])
         }
-        else{
-          resolve({
-            incomingSeqNum: 1,
-            outgoingSeqNum: 1
-          })
+        reader.close()
+        return{
+          incomingSeqNum: ++incomingSeqNum,
+          outgoingSeqNum: ++outgoingSeqNum
         }
-      })
+      }
+      else{
+        return {
+          incomingSeqNum: 1,
+          outgoingSeqNum: 1
+        }
+      }
   }
 
     #fixVersion: Required<FIXSessionOptions>['fixVersion']

@@ -21,7 +21,7 @@ class FIXSession extends events_1.EventEmitter {
     #testRequestID = 1;
     #isResendRequested = false;
     #isLogoutRequested = false;
-    decode = async (raw) => {
+    decode = (raw) => {
         this.#timeOfLastIncoming = new Date().getTime();
         const fix = (0, fixutils_1.convertToMap)(raw);
         const msgType = fix[fixtagnums_1.keyvals.MsgType];
@@ -51,7 +51,7 @@ class FIXSession extends events_1.EventEmitter {
                     };
                 }
                 else {
-                    this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
+                    this.#session = this.retriveSession(this.#senderCompID, this.#targetCompID);
                 }
             }
             const heartbeatInMilliSeconds = parseInt(fix[fixtagnums_1.keyvals.HeartBtInt] ?? this.#defaultHeartbeatSeconds, 10) * 1000;
@@ -322,38 +322,34 @@ class FIXSession extends events_1.EventEmitter {
     };
     retriveSession = async (senderCompID, targetCompID) => {
         let fileName = this.#logfilename = `${this.#logFolder}/${senderCompID}-${targetCompID}.log`;
-        return new Promise((resolve, reject) => {
-            if ((0, fs_1.existsSync)(fileName)) {
-                const reader = (0, fs_1.createReadStream)(fileName, {
-                    'flags': 'r',
-                    'encoding': 'binary',
-                    'mode': 0o666
-                });
-                const lineReader = (0, readline_1.createInterface)({
-                    input: reader,
-                });
-                let incomingSeqNum = 0;
-                let outgoingSeqNum = 0;
-                lineReader.on('line', (line) => {
-                    const _fix = (0, fixutils_1.convertToMap)(line);
-                    incomingSeqNum = Number(_fix[369]);
-                    outgoingSeqNum = Number(_fix[34]);
-                });
-                lineReader.on('close', () => {
-                    resolve({
-                        incomingSeqNum: ++incomingSeqNum,
-                        outgoingSeqNum: ++outgoingSeqNum
-                    });
-                    reader.close();
-                });
+        if ((0, fs_1.existsSync)(fileName)) {
+            const reader = (0, fs_1.createReadStream)(fileName, {
+                'flags': 'r',
+                'encoding': 'binary',
+                'mode': 0o666
+            });
+            const lineReader = (0, readline_1.createInterface)({
+                input: reader,
+            });
+            let incomingSeqNum = 0;
+            let outgoingSeqNum = 0;
+            for await (const line of lineReader) {
+                const _fix = (0, fixutils_1.convertToMap)(line);
+                incomingSeqNum = Number(_fix[369]);
+                outgoingSeqNum = Number(_fix[34]);
             }
-            else {
-                resolve({
-                    incomingSeqNum: 1,
-                    outgoingSeqNum: 1
-                });
-            }
-        });
+            reader.close();
+            return {
+                incomingSeqNum: ++incomingSeqNum,
+                outgoingSeqNum: ++outgoingSeqNum
+            };
+        }
+        else {
+            return {
+                incomingSeqNum: 1,
+                outgoingSeqNum: 1
+            };
+        }
     };
     #fixVersion;
     #senderCompID;

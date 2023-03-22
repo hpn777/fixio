@@ -1,9 +1,9 @@
 const { FIXServer } = require('../dist/FIXServer')
 
 const serverOptions = {
-  port: 1234,
+  port: 12345,
   host: 'localhost',
-  resetSeqNumOnReconect: false
+  resetSeqNumOnReconect: true
 }
 
 const server = new FIXServer(serverOptions)

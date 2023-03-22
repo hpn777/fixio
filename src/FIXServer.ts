@@ -103,11 +103,11 @@ export class FIXServer {
         ).subscribe(this.jsonIn$)
 
         fixIn$.pipe(
-            map((msg) => ({ msg: fixSession.decode(msg), senderId })),
+            map( (msg) => ({ msg: fixSession.decode(msg), senderId })),
             catchError((error: unknown) => {
                 connection.emit('error', error)
                 return NEVER
-            }),
+            })
         ).subscribe(this.dataIn$)
     })
 
