@@ -128,7 +128,7 @@ function convertToFIX(msg, fixVersion, timeStamp, senderCompID, targetCompID, ou
     return outmsg;
 }
 exports.convertToFIX = convertToFIX;
-function convertToKeyvals(msg) {
+function convertToKeyvals(msg, soh = exports.SOHCHAR) {
     const keyvals = [];
     let cursor = 0;
     while (cursor < msg.length) {
@@ -142,7 +142,7 @@ function convertToKeyvals(msg) {
                 attrLength = 0;
                 cursor = i + 1;
             }
-            else if (msg[i] === exports.SOHCHAR || msg[i] === undefined) {
+            else if (msg[i] === soh || msg[i] === undefined) {
                 value = msg.substr(cursor, attrLength - 1);
                 cursor = i + 1;
                 break;

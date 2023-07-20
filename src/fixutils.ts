@@ -171,7 +171,7 @@ export function convertToFIX(
     return outmsg;
 }
 
-function convertToKeyvals(msg: string): Array<[any, unknown]> {
+function convertToKeyvals(msg: string, soh = SOHCHAR): Array<[any, unknown]> {
     const keyvals: Array<[any, unknown]> = []
     let cursor = 0
 
@@ -186,7 +186,7 @@ function convertToKeyvals(msg: string): Array<[any, unknown]> {
                 attrLength = 0
                 cursor = i + 1
             }
-            else if (msg[i] === SOHCHAR || msg[i] === undefined) {
+            else if (msg[i] === soh || msg[i] === undefined) {
                 value = msg.substr(cursor, attrLength - 1)
                 cursor = i + 1
                 break;

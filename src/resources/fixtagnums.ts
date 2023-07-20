@@ -972,5 +972,6 @@ export enum keyvals {
   "Nested3PartySubIDType" = 954,
   "LegContractSettlMonth" = 955,
   "LegInterestAccrualDate" = 956,
+  "TradeID" = 1003,
   "ApplVerID" = 1128,
 }

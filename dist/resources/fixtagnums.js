@@ -967,6 +967,7 @@ var keyvals;
     keyvals[keyvals["Nested3PartySubIDType"] = 954] = "Nested3PartySubIDType";
     keyvals[keyvals["LegContractSettlMonth"] = 955] = "LegContractSettlMonth";
     keyvals[keyvals["LegInterestAccrualDate"] = 956] = "LegInterestAccrualDate";
+    keyvals[keyvals["TradeID"] = 1003] = "TradeID";
     keyvals[keyvals["ApplVerID"] = 1128] = "ApplVerID";
 })(keyvals = exports.keyvals || (exports.keyvals = {}));
 //# sourceMappingURL=fixtagnums.js.map
