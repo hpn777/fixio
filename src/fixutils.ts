@@ -1,5 +1,5 @@
-import { fixRepeatingGroups } from './resources/fixSchema'
-import { resolveKey, keyvals } from './resources/fixtagnums'
+import { repeatingGroups, keyvals } from './resources/fixSchema'
+// import { keyvals } from './resources/fixtagnums'
 
 const headerFields: Record<any, boolean> = {
     [keyvals.BeginString]: true,
@@ -78,8 +78,8 @@ export function convertMapToFIX(map: Record<number, unknown>) {
 let grupToFix = (tag: string, item:any, bodymsgarr: Array<unknown>) => {
     bodymsgarr.push(tag, '=', item.length, SOHCHAR)
     for (const group of item) {
-        if (fixRepeatingGroups[tag]) {
-            fixRepeatingGroups[tag].forEach(x => {
+        if (repeatingGroups[tag]) {
+            repeatingGroups[tag].forEach(x => {
                 if (Array.isArray(group[x])) {
                     grupToFix(x, group[x], bodymsgarr)
                 } else if(group[x] !== undefined){
@@ -215,7 +215,7 @@ export function convertToMap(msg: string) {
     let i = 0;
     while (i < msgKeyvals.length) {
         const pair = msgKeyvals[i]
-        const repeatinGroup = fixRepeatingGroups[pair[0]]
+        const repeatinGroup = repeatingGroups[pair[0]]
         if (!repeatinGroup) {
             fix[pair[0] as unknown as number] = pair[1]
             i++
@@ -240,16 +240,16 @@ export function convertToJSON(msg: string): Record<any, unknown> {
     let i = 0;
     while (i < msgKeyvals.length) {
         const [key, value] = msgKeyvals[i]
-        const repeatingGroup = fixRepeatingGroups[key]
+        const repeatingGroup = repeatingGroups[key]
         if (repeatingGroup === undefined) {
             const nr = Number(value)
-            fix[resolveKey(key)] = !isNaN(nr) ? nr : value
+            fix[keyvals[key]] = !isNaN(nr) ? nr : value
             i++
         } else {
             const nr = Number(value)
             if (!isNaN(nr)) {
                 const response = repeatingGroupToJSON(repeatingGroup, nr, msgKeyvals.slice(i + 1))
-                fix[resolveKey(key)] = response.repeatingGroup
+                fix[keyvals[key]] = response.repeatingGroup
                 i += (1 + response.length)
             } else {
                 throw new Error(`Repeating Group: "${key} = ${value}" is invalid`)
@@ -284,7 +284,7 @@ function repeatingGroupToMap(
             if (repeatinGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatinGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             } else {
-                const repeatinGroup = fixRepeatingGroups[pair[0]]
+                const repeatinGroup = repeatingGroups[pair[0]]
                 if (!repeatinGroup) {
                     group[pair[0] as unknown as number] = pair[1]
                     ++k
@@ -334,9 +334,9 @@ function repeatingGroupToJSON(
             if (repeatingGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatingGroup[0] === msgKeyvals[k][0] && index !== 0)) {
                 break;
             } else {
-                const repeatinGroup = fixRepeatingGroups[pair[0]]
+                const repeatinGroup = repeatingGroups[pair[0]]
                 if (!repeatinGroup) {
-                    group[resolveKey(pair[0])] = pair[1]
+                    group[keyvals[pair[0]]] = pair[1]
                     ++k
                 } else {
                     const nr = Number(pair[1])

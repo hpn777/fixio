@@ -1,14 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.keyvals = exports.resolveKey = void 0;
-function isKeyvalsLike(value) {
-    return typeof value === 'number'
-        || (typeof value === 'string' && !isNaN(value) && !isNaN(parseFloat(value)));
-}
-function resolveKey(key) {
-    return keyvals[key] || key;
-}
-exports.resolveKey = resolveKey;
+exports.keyvals = void 0;
 var keyvals;
 (function (keyvals) {
     keyvals[keyvals["Account"] = 1] = "Account";

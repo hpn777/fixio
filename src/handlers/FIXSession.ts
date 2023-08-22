@@ -2,7 +2,7 @@ import { mkdirSync, createWriteStream, unlinkSync, createReadStream, WriteStream
 import { createInterface as createReadlineInterface } from 'readline'
 import { EventEmitter } from 'events'
 import { convertToMap, convertToFIX, getUTCTimeStamp } from '../fixutils'
-import { keyvals } from '../resources/fixtagnums'
+import { keyvals } from '../resources/fixSchema'
 import type { Socket } from 'net'
 
 export interface FIXConnection {

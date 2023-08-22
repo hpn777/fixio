@@ -5,7 +5,7 @@ const fs_1 = require("fs");
 const readline_1 = require("readline");
 const events_1 = require("events");
 const fixutils_1 = require("../fixutils");
-const fixtagnums_1 = require("../resources/fixtagnums");
+const fixSchema_1 = require("../resources/fixSchema");
 const sessions = {};
 class FIXSession extends events_1.EventEmitter {
     #fixClient;
@@ -24,18 +24,18 @@ class FIXSession extends events_1.EventEmitter {
     decode = async (raw) => {
         this.#timeOfLastIncoming = new Date().getTime();
         const fix = (0, fixutils_1.convertToMap)(raw);
-        const msgType = fix[fixtagnums_1.keyvals.MsgType];
+        const msgType = fix[fixSchema_1.keyvals.MsgType];
         if (!this.#session.isLoggedIn && (msgType !== 'A' && msgType !== '5')) {
             const error = '[ERROR] First message must be logon:' + raw;
             throw new Error(error);
         }
         else if (!this.#session.isLoggedIn && msgType === 'A') {
             if (this.#isAcceptor) {
-                this.#fixVersion = fix[fixtagnums_1.keyvals.BeginString];
-                this.#senderCompID = fix[fixtagnums_1.keyvals.TargetCompID];
-                this.#senderSubID = fix[fixtagnums_1.keyvals.SenderSubID];
-                this.#targetCompID = fix[fixtagnums_1.keyvals.SenderCompID];
-                this.#targetSubID = fix[fixtagnums_1.keyvals.TargetSubID];
+                this.#fixVersion = fix[fixSchema_1.keyvals.BeginString];
+                this.#senderCompID = fix[fixSchema_1.keyvals.TargetCompID];
+                this.#senderSubID = fix[fixSchema_1.keyvals.SenderSubID];
+                this.#targetCompID = fix[fixSchema_1.keyvals.SenderCompID];
+                this.#targetSubID = fix[fixSchema_1.keyvals.TargetSubID];
                 if (this.#isDuplicateFunc(this.#senderCompID, this.#targetCompID)) {
                     const error = `[ERROR] Session already logged in: ${raw} `;
                     throw new Error(error);
@@ -54,19 +54,19 @@ class FIXSession extends events_1.EventEmitter {
                     this.#session = await this.retriveSession(this.#senderCompID, this.#targetCompID);
                 }
             }
-            const heartbeatInMilliSeconds = parseInt(fix[fixtagnums_1.keyvals.HeartBtInt] ?? this.#defaultHeartbeatSeconds, 10) * 1000;
+            const heartbeatInMilliSeconds = parseInt(fix[fixSchema_1.keyvals.HeartBtInt] ?? this.#defaultHeartbeatSeconds, 10) * 1000;
             this.#heartbeatIntervalID = setInterval(() => {
                 const currentTime = new Date().getTime();
                 if (currentTime - this.#timeOfLastOutgoingHeartbeat > heartbeatInMilliSeconds && this.#sendHeartbeats) {
                     this.send({
-                        [fixtagnums_1.keyvals.MsgType]: '0'
+                        [fixSchema_1.keyvals.MsgType]: '0'
                     });
                     this.#timeOfLastOutgoingHeartbeat = new Date().getTime();
                 }
                 if (currentTime - this.#timeOfLastIncoming > (heartbeatInMilliSeconds * 1.5) && this.#expectHeartbeats) {
                     this.send({
-                        [fixtagnums_1.keyvals.MsgType]: '1',
-                        [fixtagnums_1.keyvals.TestReqID]: this.#testRequestID++
+                        [fixSchema_1.keyvals.MsgType]: '1',
+                        [fixSchema_1.keyvals.TestReqID]: this.#testRequestID++
                     });
                 }
                 if (currentTime - this.#timeOfLastIncoming > heartbeatInMilliSeconds * 2 && this.#expectHeartbeats) {
@@ -83,8 +83,8 @@ class FIXSession extends events_1.EventEmitter {
                 this.send(fix);
             }
         }
-        const msgSeqNum = Number(fix[fixtagnums_1.keyvals.MsgSeqNum]);
-        if (msgType !== '4' && msgType !== '5' && fix[fixtagnums_1.keyvals.PossDupFlag] !== 'Y') {
+        const msgSeqNum = Number(fix[fixSchema_1.keyvals.MsgSeqNum]);
+        if (msgType !== '4' && msgType !== '5' && fix[fixSchema_1.keyvals.PossDupFlag] !== 'Y') {
             if (msgSeqNum >= this.#requestResendTargetSeqNum) {
                 this.#isResendRequested = false;
             }
@@ -103,15 +103,15 @@ class FIXSession extends events_1.EventEmitter {
         switch (msgType) {
             case '1':
                 this.send({
-                    [fixtagnums_1.keyvals.MsgType]: '0',
-                    [fixtagnums_1.keyvals.TestReqID]: fix[fixtagnums_1.keyvals.TestReqID],
+                    [fixSchema_1.keyvals.MsgType]: '0',
+                    [fixSchema_1.keyvals.TestReqID]: fix[fixSchema_1.keyvals.TestReqID],
                 });
                 break;
             case '2':
-                this.resendMessages(fix[fixtagnums_1.keyvals.BeginSeqNo] ? Number(fix[fixtagnums_1.keyvals.BeginSeqNo]) : undefined, fix[fixtagnums_1.keyvals.EndSeqNo] ? Number(fix[fixtagnums_1.keyvals.EndSeqNo]) : undefined);
+                this.resendMessages(fix[fixSchema_1.keyvals.BeginSeqNo] ? Number(fix[fixSchema_1.keyvals.BeginSeqNo]) : undefined, fix[fixSchema_1.keyvals.EndSeqNo] ? Number(fix[fixSchema_1.keyvals.EndSeqNo]) : undefined);
                 break;
             case '4':
-                const resetSeqNo = Number(fix[fixtagnums_1.keyvals.NewSeqNo]);
+                const resetSeqNo = Number(fix[fixSchema_1.keyvals.NewSeqNo]);
                 if (!Number.isNaN(resetSeqNo)) {
                     if (resetSeqNo >= this.#session.incomingSeqNum) {
                         if (resetSeqNo > this.#requestResendTargetSeqNum && this.#requestResendRequestedSeqNum !== this.#requestResendTargetSeqNum) {
@@ -136,8 +136,8 @@ class FIXSession extends events_1.EventEmitter {
             case '5':
                 if (!this.#isLogoutRequested) {
                     this.send(fix);
-                    if (fix[fixtagnums_1.keyvals.NextExpectedMsgSeqNum])
-                        this.#session.outgoingSeqNum = Number(fix[fixtagnums_1.keyvals.NextExpectedMsgSeqNum]);
+                    if (fix[fixSchema_1.keyvals.NextExpectedMsgSeqNum])
+                        this.#session.outgoingSeqNum = Number(fix[fixSchema_1.keyvals.NextExpectedMsgSeqNum]);
                 }
                 setImmediate(() => {
                     this.#fixClient.connection?.destroy();
@@ -146,7 +146,7 @@ class FIXSession extends events_1.EventEmitter {
                 this.emit('logoff', {
                     senderCompID: this.#senderCompID,
                     targetCompID: this.#targetCompID,
-                    logoffReason: fix[fixtagnums_1.keyvals.Text],
+                    logoffReason: fix[fixSchema_1.keyvals.Text],
                 });
                 break;
         }
@@ -168,9 +168,9 @@ class FIXSession extends events_1.EventEmitter {
         }
     };
     logon = async (logonmsg = {
-        [fixtagnums_1.keyvals.MsgType]: 'A',
-        [fixtagnums_1.keyvals.EncryptMethod]: '0',
-        [fixtagnums_1.keyvals.HeartBtInt]: '10',
+        [fixSchema_1.keyvals.MsgType]: 'A',
+        [fixSchema_1.keyvals.EncryptMethod]: '0',
+        [fixSchema_1.keyvals.HeartBtInt]: '10',
     }) => {
         if (this.#resetSeqNumOnReconect) {
             this.#session = {
@@ -185,8 +185,8 @@ class FIXSession extends events_1.EventEmitter {
     };
     logoff = (logoffReason = 'Graceful close') => {
         this.send({
-            [fixtagnums_1.keyvals.MsgType]: 5,
-            [fixtagnums_1.keyvals.Text]: logoffReason,
+            [fixSchema_1.keyvals.MsgType]: 5,
+            [fixSchema_1.keyvals.Text]: logoffReason,
         });
         this.#session.isLoggedIn = false;
         this.#isLogoutRequested = true;
@@ -194,9 +194,9 @@ class FIXSession extends events_1.EventEmitter {
     send = (immutableMsg, replay) => {
         const msg = { ...immutableMsg };
         if (!replay) {
-            msg[fixtagnums_1.keyvals.LastMsgSeqNumProcessed] = this.#session.incomingSeqNum - 1;
+            msg[fixSchema_1.keyvals.LastMsgSeqNumProcessed] = this.#session.incomingSeqNum - 1;
         }
-        const outgoingSeqNum = replay ? msg[fixtagnums_1.keyvals.MsgSeqNum] : this.#session.outgoingSeqNum;
+        const outgoingSeqNum = replay ? msg[fixSchema_1.keyvals.MsgSeqNum] : this.#session.outgoingSeqNum;
         const outmsg = (0, fixutils_1.convertToFIX)(msg, this.#fixVersion, (0, fixutils_1.getUTCTimeStamp)(), this.#senderCompID, this.#targetCompID, outgoingSeqNum, {
             senderSubID: this.#senderSubID,
             targetSubID: this.#targetSubID,
@@ -253,9 +253,9 @@ class FIXSession extends events_1.EventEmitter {
         if (this.#isResendRequested === false && start < this.#requestResendTargetSeqNum) {
             this.#isResendRequested = true;
             const send = (from, to = 0) => this.send({
-                [fixtagnums_1.keyvals.MsgType]: 2,
-                [fixtagnums_1.keyvals.BeginSeqNo]: from,
-                [fixtagnums_1.keyvals.EndSeqNo]: to,
+                [fixSchema_1.keyvals.MsgType]: 2,
+                [fixSchema_1.keyvals.BeginSeqNo]: from,
+                [fixSchema_1.keyvals.EndSeqNo]: to,
             });
             if (target - start <= batchSize) {
                 this.#requestResendRequestedSeqNum = this.#requestResendTargetSeqNum = 0;
@@ -281,18 +281,18 @@ class FIXSession extends events_1.EventEmitter {
             const sendFillGap = () => {
                 if (fillGapBuffer.length > 0) {
                     this.send({
-                        [fixtagnums_1.keyvals.MsgType]: '4',
-                        [fixtagnums_1.keyvals.OrigSendingTime]: fillGapBuffer[0][fixtagnums_1.keyvals.SendingTime],
-                        [fixtagnums_1.keyvals.GapFillFlag]: 'Y',
-                        [fixtagnums_1.keyvals.MsgSeqNum]: Number(fillGapBuffer[0][fixtagnums_1.keyvals.MsgSeqNum]),
-                        [fixtagnums_1.keyvals.NewSeqNo]: Number(fillGapBuffer[fillGapBuffer.length - 1][fixtagnums_1.keyvals.MsgSeqNum]) + 1,
+                        [fixSchema_1.keyvals.MsgType]: '4',
+                        [fixSchema_1.keyvals.OrigSendingTime]: fillGapBuffer[0][fixSchema_1.keyvals.SendingTime],
+                        [fixSchema_1.keyvals.GapFillFlag]: 'Y',
+                        [fixSchema_1.keyvals.MsgSeqNum]: Number(fillGapBuffer[0][fixSchema_1.keyvals.MsgSeqNum]),
+                        [fixSchema_1.keyvals.NewSeqNo]: Number(fillGapBuffer[fillGapBuffer.length - 1][fixSchema_1.keyvals.MsgSeqNum]) + 1,
                     }, true);
                     fillGapBuffer = [];
                 }
             };
             lineReader.on('line', (line) => {
                 const _fix = (0, fixutils_1.convertToMap)(line);
-                const _msgType = `${_fix[fixtagnums_1.keyvals.MsgType]}`;
+                const _msgType = `${_fix[fixSchema_1.keyvals.MsgType]}`;
                 const _seqNo = Number(_fix[34]);
                 if ((BeginSeqNo <= _seqNo) && (EndSeqNo >= _seqNo)) {
                     if (['A', '5', '2', '0', '1', '4'].includes(_msgType)) {
@@ -305,10 +305,10 @@ class FIXSession extends events_1.EventEmitter {
                         sendFillGap();
                         this.send({
                             ..._fix,
-                            [fixtagnums_1.keyvals.OrigSendingTime]: _fix[fixtagnums_1.keyvals.SendingTime],
-                            [fixtagnums_1.keyvals.PossDupFlag]: 'Y',
-                            [fixtagnums_1.keyvals.MsgSeqNum]: _seqNo,
-                            [fixtagnums_1.keyvals.NewSeqNo]: _seqNo + 1,
+                            [fixSchema_1.keyvals.OrigSendingTime]: _fix[fixSchema_1.keyvals.SendingTime],
+                            [fixSchema_1.keyvals.PossDupFlag]: 'Y',
+                            [fixSchema_1.keyvals.MsgSeqNum]: _seqNo,
+                            [fixSchema_1.keyvals.NewSeqNo]: _seqNo + 1,
                         }, true);
                     }
                 }

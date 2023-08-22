@@ -5,7 +5,6 @@ import { TLSSocket } from 'tls'
 import { convertToJSON } from './fixutils'
 import { FIXConnection, FIXSession, FIXSessionOptions } from './handlers/FIXSession'
 import { FrameDecoder } from './handlers/FrameDecoder'
-import { keyvals } from './resources/fixtagnums'
 
 export * as fixutil from './fixutils'
 
