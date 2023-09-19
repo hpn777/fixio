@@ -1,5 +1,7 @@
-import { repeatingGroups, keyvals } from './resources/fixSchema'
-// import { keyvals } from './resources/fixtagnums'
+import * as fixSchema from './resources/fixSchema'
+
+let repeatingGroups = fixSchema.repeatingGroups
+let keyvals = fixSchema.keyvals
 
 const headerFields: Record<any, boolean> = {
     [keyvals.BeginString]: true,
@@ -17,6 +19,11 @@ const headerFields: Record<any, boolean> = {
 }
 
 export let SOHCHAR = String.fromCharCode(1);
+
+export function setFixSchema(fixGroups: Record<string, string[]>, fixKeyvals: any): void {
+  repeatingGroups = fixGroups
+  keyvals = fixKeyvals
+}
 
 export function setSOHCHAR(char: string): void {
     SOHCHAR = char
