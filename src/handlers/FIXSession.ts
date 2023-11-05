@@ -48,7 +48,7 @@ export class FIXSession extends EventEmitter {
 
     #timeOfLastIncoming = new Date().getTime();
 
-    #heartbeatIntervalID?: NodeJS.Timer
+    #heartbeatIntervalID?: NodeJS.Timeout
 
     #timeOfLastOutgoing = new Date().getTime();
 
@@ -138,7 +138,7 @@ export class FIXSession extends EventEmitter {
             }, heartbeatInMilliSeconds / 2);
 
             this.#fixClient.connection?.on('close', () => {
-                clearInterval(this.#heartbeatIntervalID!);
+                clearInterval(this.#heartbeatIntervalID);
             });
 
             //==Logon successful

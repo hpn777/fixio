@@ -16,6 +16,8 @@ export const repeatingGroups: Record<string, Array<string>> = {
   '1508': ['1509', '2386'],
   '1668': ['1530'],
   '1559': ['1769', '1560', '1768', '1561'],
+  '296': ['302', '304', '295', '1168', '1169', '1170'],
+  '295': ['299', '48', '22', '132', '133', '134', '135', '60', '1167', '368', '1747', '1748']
 }
 
 export enum keyvals {
@@ -980,4 +982,6 @@ export enum keyvals {
   "TradeID" = 1003,
   "ApplVerID" = 1128,
   "MarketSegmentID" = 1300,
+  "TestEventType" = 3001,
+  "ScenarioName" = 3002,
 }
