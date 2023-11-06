@@ -1,11 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
-<<<<<<< HEAD
-  "version": "1.5.18",
-=======
-  "version": "1.5.15",
->>>>>>> b6322f5 (added mass quotes)
+  "version": "1.5.19",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"

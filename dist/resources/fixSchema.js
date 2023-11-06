@@ -19,6 +19,8 @@ exports.repeatingGroups = {
     '1508': ['1509', '2386'],
     '1668': ['1530'],
     '1559': ['1769', '1560', '1768', '1561'],
+    '296': ['302', '304', '295', '1168', '1169', '1170'],
+    '295': ['299', '48', '22', '132', '133', '134', '135', '60', '1167', '368', '1747', '1748']
 };
 var keyvals;
 (function (keyvals) {
@@ -981,5 +983,7 @@ var keyvals;
     keyvals[keyvals["TradeID"] = 1003] = "TradeID";
     keyvals[keyvals["ApplVerID"] = 1128] = "ApplVerID";
     keyvals[keyvals["MarketSegmentID"] = 1300] = "MarketSegmentID";
+    keyvals[keyvals["TestEventType"] = 3001] = "TestEventType";
+    keyvals[keyvals["ScenarioName"] = 3002] = "ScenarioName";
 })(keyvals = exports.keyvals || (exports.keyvals = {}));
 //# sourceMappingURL=fixSchema.js.map
