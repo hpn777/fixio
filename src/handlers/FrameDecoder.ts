@@ -1,7 +1,6 @@
-import { checksum } from '../fixutils'
+import { checksum, SOHCHAR } from '../fixutils'
 
 //static vars
-const SOHCHAR = String.fromCharCode(1)
 const re = new RegExp(SOHCHAR, "g")
 const SIZEOFTAG10 = 8
 
