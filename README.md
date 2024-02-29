@@ -9,7 +9,7 @@ npm install fixio
 Test
 ============
 
-You can run tests by:
+You can run learning tests by:
 
 ```bash
 npm test
