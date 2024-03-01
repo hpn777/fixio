@@ -68,6 +68,36 @@ export function checksum(str: string) {
     return checksumstr;
 }
 
+/**
+ * Converts object fields to **known** FIX tags. 
+ * Usefull before {@link convertMapToFIX} or {@link convertToFIX} or sending to fix server via {@link FIXClient}
+ * 
+ * @param instance - POJO, with human-readable field names
+ * @returns key-value pairs, where key is a FIX tag. 
+ * If object field name was unknown - returns this field as it was
+ */
+export function convertFieldsToFixTags(instance: object): Record<any, unknown> {
+    const resultMap = new Map<any, unknown>();
+    for (const [field, value] of Object.entries(instance)) {
+        let tag: number | null = null
+
+        try {
+            tag = keyvals[field as keyof typeof keyvals];
+            if (tag) resultMap.set(tag, value)
+        } catch (e) {
+            // nothing
+        }
+
+        if (!tag) {
+            // if no tag found - put as is
+            resultMap.set(field, value)
+        }
+    }
+
+    let result = Object.fromEntries(resultMap);
+    return result
+}
+
 export function convertMapToFIX(map: Record<number, unknown>) {
     return convertToFIX(
         map,
