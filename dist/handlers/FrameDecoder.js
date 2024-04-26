@@ -2,8 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FrameDecoder = void 0;
 const fixutils_1 = require("../fixutils");
-const SOHCHAR = String.fromCharCode(1);
-const re = new RegExp(SOHCHAR, "g");
+const re = new RegExp(fixutils_1.SOHCHAR, "g");
 const SIZEOFTAG10 = 8;
 class FrameDecoder {
     #buffer = '';
@@ -27,7 +26,7 @@ class FrameDecoder {
                         attrLength = 0;
                         cursor = i + 1;
                     }
-                    else if (this.#buffer[i] === SOHCHAR) {
+                    else if (this.#buffer[i] === fixutils_1.SOHCHAR) {
                         value = this.#buffer.substr(cursor, attrLength - 1);
                         cursor = i + 1;
                         break;

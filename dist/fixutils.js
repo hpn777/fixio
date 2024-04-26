@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertToJSON = exports.convertToMap = exports.convertToFIX = exports.convertMapToFIX = exports.checksum = exports.getUTCTimeStamp = exports.setSOHCHAR = exports.setFixSchema = exports.SOHCHAR = void 0;
+exports.convertToJSON = exports.convertToMap = exports.convertToFIX = exports.convertMapToFIX = exports.convertFieldsToFixTags = exports.checksum = exports.getUTCTimeStamp = exports.setSOHCHAR = exports.setFixSchema = exports.SOHCHAR = void 0;
 const tslib_1 = require("tslib");
 const fixSchema = tslib_1.__importStar(require("./resources/fixSchema"));
 let repeatingGroups = fixSchema.repeatingGroups;
@@ -64,6 +64,25 @@ function checksum(str) {
     return checksumstr;
 }
 exports.checksum = checksum;
+function convertFieldsToFixTags(instance) {
+    const resultMap = new Map();
+    for (const [field, value] of Object.entries(instance)) {
+        let tag = null;
+        try {
+            tag = keyvals[field];
+            if (tag)
+                resultMap.set(tag, value);
+        }
+        catch (e) {
+        }
+        if (!tag) {
+            resultMap.set(field, value);
+        }
+    }
+    let result = Object.fromEntries(resultMap);
+    return result;
+}
+exports.convertFieldsToFixTags = convertFieldsToFixTags;
 function convertMapToFIX(map) {
     return convertToFIX(map, map[keyvals.BeginString], map[keyvals.SendingTime], map[keyvals.SenderCompID], map[keyvals.TargetCompID], map[keyvals.MsgSeqNum], {
         senderSubID: map[keyvals.SenderSubID],
