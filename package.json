@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
-  "version": "1.5.25",
+  "version": "1.5.26",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
