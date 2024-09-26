@@ -1,8 +1,8 @@
 import { mkdirSync, createWriteStream, unlinkSync, createReadStream, WriteStream, existsSync } from 'fs'
 import { createInterface as createReadlineInterface } from 'readline'
 import { EventEmitter } from 'events'
-import { convertToMap, convertToFIX, getUTCTimeStamp } from '../fixutils'
-import { keyvals } from '../resources/fixSchema'
+import { convertToMap, convertToFIX, getUTCTimeStamp, setFixSchema } from '../fixutils'
+import { keyvals, repeatingGroups} from '../resources/fixSchema'
 import type { Socket } from 'net'
 
 export interface FIXConnection {
@@ -35,6 +35,8 @@ export interface FIXSessionOptions {
     readonly sendHeartbeats?: boolean;
     readonly expectHeartbeats?: boolean;
     readonly respondToLogon?: boolean;
+    readonly reapeatingGroups?: Record<string, string[]>;
+    readonly keyvals?: any;
 }
 
 export class FIXSession extends EventEmitter {
@@ -534,5 +536,10 @@ export class FIXSession extends EventEmitter {
         this.#sendHeartbeats = options.sendHeartbeats ?? true
         this.#expectHeartbeats = options.expectHeartbeats ?? true
         this.#respondToLogon = options.respondToLogon ?? true
+
+        setFixSchema(
+            options.reapeatingGroups ?? repeatingGroups, 
+            options.keyvals ?? keyvals
+        )
     }
 }

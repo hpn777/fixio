@@ -6,8 +6,6 @@ import { convertToJSON } from './fixutils'
 import { FIXConnection, FIXSession, FIXSessionOptions } from './handlers/FIXSession'
 import { FrameDecoder } from './handlers/FrameDecoder'
 
-export * as fixutil from './fixutils'
-
 export interface FIXClientOptions extends Omit<FIXSessionOptions, 'senderCompID' | 'targetCompID' | 'fixVersion'> {
     readonly ssl?: boolean;
     readonly autologon?: boolean;

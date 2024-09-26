@@ -386,6 +386,7 @@ class FIXSession extends events_1.EventEmitter {
         this.#sendHeartbeats = options.sendHeartbeats ?? true;
         this.#expectHeartbeats = options.expectHeartbeats ?? true;
         this.#respondToLogon = options.respondToLogon ?? true;
+        (0, fixutils_1.setFixSchema)(options.reapeatingGroups ?? fixSchema_1.repeatingGroups, options.keyvals ?? fixSchema_1.keyvals);
     }
 }
 exports.FIXSession = FIXSession;

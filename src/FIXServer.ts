@@ -5,8 +5,6 @@ import { convertToJSON } from './fixutils'
 import { FrameDecoder } from './handlers/FrameDecoder'
 import { FIXSession, FIXSessionOptions, FIXConnection } from './handlers/FIXSession'
 
-export * as fixutil from './fixutils'
-
 export type SessionHolder =
     & FIXConnection
     & Pick<FIXSession, 'send' | 'resetFIXSession'>

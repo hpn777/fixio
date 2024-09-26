@@ -1,14 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FIXClient = exports.fixutil = void 0;
-const tslib_1 = require("tslib");
+exports.FIXClient = void 0;
 const rxjs_1 = require("rxjs");
 const operators_1 = require("rxjs/operators");
 const net_1 = require("net");
 const tls_1 = require("tls");
 const FIXSession_1 = require("./handlers/FIXSession");
 const FrameDecoder_1 = require("./handlers/FrameDecoder");
-exports.fixutil = tslib_1.__importStar(require("./fixutils"));
 class FIXClient {
     #fixSession;
     #frameDecoder;
