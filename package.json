@@ -1,12 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "fixio",
-  "version": "1.5.28",
+  "version": "1.5.29",
   "author": {
     "name": "Rafal Okninski",
     "email": "hpn777@gmail.com"
   },
   "scripts": {
+    "install": "npx tsc",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest --config jest.config.js --runInBand --coverage"
