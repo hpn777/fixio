@@ -1,4 +1,4 @@
-import * as fixSchema from './resources/fixSchema'
+import * as fixSchema from './resources/fixSchema';
 
 let repeatingGroups = fixSchema.repeatingGroups
 let keyvals = fixSchema.keyvals
@@ -12,6 +12,22 @@ const headerFields: Record<any, boolean> = {
     [keyvals.SenderCompID]: true,
     [keyvals.SenderSubID]: true,
     [keyvals.TargetCompID]: true,
+    [keyvals.OnBehalfOfCompID]: true,
+    [keyvals.DeliverToCompID]: true,
+    [keyvals.SecureDataLen]: true,
+    [keyvals.SecureData]: true,
+    [keyvals.TargetSubID]: true,
+    [keyvals.TargetLocationID]: true,
+    [keyvals.OnBehalfOfSubID]: true,
+    [keyvals.OnBehalfOfLocationID]: true,
+    [keyvals.DeliverToSubID]: true,
+    [keyvals.DeliverToLocationID]: true,
+    [keyvals.PossDupFlag]: true,
+    [keyvals.PossResend]: true,
+    [keyvals.OrigSendingTime]: true,
+    [keyvals.XmlDataLen]: true,
+    [keyvals.XmlData]: true,
+    [keyvals.MessageEncoding]: true,
     [keyvals.MsgSeqNum]: true,
     [keyvals.ApplVerID]: true,
     [keyvals.SenderLocationID]: true,
