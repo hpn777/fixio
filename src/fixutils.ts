@@ -168,10 +168,13 @@ export function convertToFIX(
     const bodymsgarr: Array<unknown> = [];
 
     headermsgarr.push(keyvals.MsgType, '=', msg[keyvals.MsgType], SOHCHAR);
-
+    delete msg[keyvals.MsgType]
+    
     headermsgarr.push(keyvals.SenderCompID, '=', msg[keyvals.SenderCompID] || senderCompID, SOHCHAR);
-
+    delete msg[keyvals.SenderCompID]
+    
     headermsgarr.push(keyvals.TargetCompID, '=', msg[keyvals.TargetCompID] || targetCompID, SOHCHAR);
+    delete msg[keyvals.TargetCompID]
 
     if (options.appVerID) {
         headermsgarr.push(keyvals.ApplVerID, '=', msg[keyvals.ApplVerID] || options.appVerID, SOHCHAR);
@@ -199,12 +202,12 @@ export function convertToFIX(
     
 
     for (const [tag, item] of Object.entries(msg)) {
-        if (headerFields[tag] !== true) {
-            if (Array.isArray(item)) {
-                grupToFix(tag, item, bodymsgarr)
-            } else {
-                bodymsgarr.push(tag, '=', item, SOHCHAR)
-            }
+        const isBodyTag = headerFields[tag] !== true
+        
+        if (Array.isArray(item)) {
+            grupToFix(tag, item, isBodyTag ? bodymsgarr: headermsgarr)
+        } else {
+            (isBodyTag ? bodymsgarr : headermsgarr).push(tag, '=', item, SOHCHAR)
         }
     }
 
