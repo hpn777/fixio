@@ -64,13 +64,8 @@ describe('Client(initiator) to Server(acceptor) tests', () => {
     });
 
     afterAll(async () => {
-        if (server) {
-            server.logoff$.unsubscribe()
-            server.logon$.unsubscribe()
-        }
         if (sut) {
-            sut.close$.unsubscribe()
-            sut.fixIn$.unsubscribe()
+            sut.close()
             sut.logoff("JEST CLIENT LOGOFF")
         }
 

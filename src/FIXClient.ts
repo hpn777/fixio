@@ -108,6 +108,20 @@ export class FIXClient implements FIXConnection {
         // fixIn$.pipe(map(convertToJSON)).subscribe(this.jsonIn$)
     }
 
+    close() {
+        this.connect$.complete()
+        this.logon$.complete()
+        this.logoff$.complete()
+        this.fixIn$.complete()
+        this.dataIn$.complete()
+        this.fixOut$.complete()
+        this.dataOut$.complete()
+        this.end$.complete()
+        this.close$.complete()
+        this.error$.complete()
+        this.connection?.end()
+    }
+
     constructor(
         fixVersion: Required<FIXSessionOptions>['fixVersion'],
         senderCompID: Required<FIXSessionOptions>['senderCompID'],
