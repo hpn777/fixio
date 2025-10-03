@@ -4,6 +4,7 @@ import { EventEmitter } from 'events'
 import { convertToMap, convertToFIX, getUTCTimeStamp, setFixSchema } from '../fixutils'
 import { keyvals, repeatingGroups} from '../resources/fixSchema'
 import type { Socket } from 'net'
+import type { FIXMessage, FIXNumericMessage, FIXKeyvals, RepeatingGroups } from '../types'
 
 export interface FIXConnection {
     readonly connection?: Socket
@@ -18,25 +19,25 @@ export interface Session {
 const sessions: Record<string, Session> = {}
 
 export interface FIXSessionOptions {
-    readonly storagePath: unknown;
-    readonly fixVersion?: unknown;
-    readonly senderCompID?: unknown;
-    readonly senderSubID?: unknown;
-    readonly targetCompID?: unknown;
-    readonly targetSubID?: unknown;
-    readonly appVerID?: unknown;
-    readonly senderLocationID?: unknown;
+    readonly storagePath: string;
+    readonly fixVersion?: string;
+    readonly senderCompID?: string;
+    readonly senderSubID?: string;
+    readonly targetCompID?: string;
+    readonly targetSubID?: string;
+    readonly appVerID?: string;
+    readonly senderLocationID?: string;
     readonly logFolder?: string;
-    readonly isDuplicateFunc?: (senderId: unknown, targetId: unknown) => boolean;
-    readonly isAuthenticFunc?: (fix: ReturnType<typeof convertToMap>, fixClientRemoteAddress: string | undefined) => boolean;
-    readonly retriveSession?: (senderId: unknown, targetId: unknown) => Session;
+    readonly isDuplicateFunc?: (senderId: string, targetId: string) => boolean;
+    readonly isAuthenticFunc?: (fix: FIXNumericMessage, fixClientRemoteAddress?: string) => boolean;
+    readonly retriveSession?: (senderId: string, targetId: string) => Session;
     readonly resetSeqNumOnReconect?: boolean;
-    readonly defaultHeartbeatSeconds?: any;
+    readonly defaultHeartbeatSeconds?: number;
     readonly sendHeartbeats?: boolean;
     readonly expectHeartbeats?: boolean;
     readonly respondToLogon?: boolean;
-    readonly reapeatingGroups?: Record<string, string[]>;
-    readonly keyvals?: any;
+    readonly reapeatingGroups?: RepeatingGroups;
+    readonly keyvals?: FIXKeyvals;
 }
 
 export class FIXSession extends EventEmitter {

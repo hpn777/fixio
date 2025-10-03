@@ -28,12 +28,14 @@ export class FrameDecoder {
                 let value: string
                 while (true) {
                     if (this.#buffer[i] === '=') {
-                        key = this.#buffer.substr(cursor, attrLength)
+                        // Phase 3: Use slice instead of substr for better performance
+                        key = this.#buffer.slice(cursor, cursor + attrLength)
                         attrLength = 0
                         cursor = i + 1
                     }
                     else if (this.#buffer[i] === SOHCHAR) {
-                        value = this.#buffer.substr(cursor, attrLength - 1)
+                        // Phase 3: Use slice instead of substr for better performance
+                        value = this.#buffer.slice(cursor, cursor + attrLength - 1)
                         cursor = i + 1
                         break;
                     }
@@ -49,13 +51,15 @@ export class FrameDecoder {
 
             let msg: string
             if (!isNaN(msgLength) && this.#buffer.length >= msgLength) {
-                msg = this.#buffer.substring(0, msgLength);
+                // Phase 3: Use slice for better performance
+                msg = this.#buffer.slice(0, msgLength);
 
                 if (msgLength === this.#buffer.length) {
                     this.#buffer = '';
                 }
                 else {
-                    this.#buffer = this.#buffer.substring(msgLength)
+                    // Phase 3: Use slice for better performance
+                    this.#buffer = this.#buffer.slice(msgLength)
                 }
             }
             else {//Message received!
@@ -63,8 +67,9 @@ export class FrameDecoder {
             }
             //====================================Step 2: Validate message====================================
 
-            const calculatedChecksum = checksum(msg.substr(0, msg.length - 7));
-            const extractedChecksum = msg.substr(msg.length - 4, 3);
+            // Phase 3: Use slice instead of substr for better performance
+            const calculatedChecksum = checksum(msg.slice(0, msg.length - 7));
+            const extractedChecksum = msg.slice(msg.length - 4, msg.length - 1);
 
             if (calculatedChecksum !== extractedChecksum) {
                 const error = '[WARNING] Discarding message because body length or checksum are wrong (expected checksum: '

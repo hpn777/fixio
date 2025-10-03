@@ -1,9 +1,10 @@
 import * as fixSchema from './resources/fixSchema';
+import type { FIXMessage, FIXKeyValuePair, FIXNumericMessage, FIXConversionOptions, RepeatingGroupResult, FIXKeyvals, RepeatingGroups } from './types';
 
 let repeatingGroups = fixSchema.repeatingGroups
 let keyvals = fixSchema.keyvals
 
-const headerFields: Record<any, boolean> = {
+const headerFields: Record<number, boolean> = {
     [keyvals.BeginString]: true,
     [keyvals.BodyLength]: true,
     [keyvals.MsgType]: true,
@@ -36,9 +37,14 @@ const headerFields: Record<any, boolean> = {
 
 export let SOHCHAR = String.fromCharCode(1);
 
-export function setFixSchema(fixGroups: Record<string, string[]>, fixKeyvals: any): void {
+// Cache for field name to tag conversions (Phase 1 optimization)
+const fieldToTagCache = new Map<string, number | null>();
+
+export function setFixSchema(fixGroups: RepeatingGroups, fixKeyvals: FIXKeyvals): void {
   repeatingGroups = fixGroups
   keyvals = fixKeyvals
+  // Clear cache when schema changes
+  fieldToTagCache.clear();
 }
 
 export function setSOHCHAR(char: string): void {
@@ -65,6 +71,7 @@ export function getUTCTimeStamp(date: Date = new Date()) {
 }
 
 export function checksum(str: string) {
+    // Optimized: Direct character code access (fastest for small strings)
     let chksm = 0;
     for (let i = 0; i < str.length; i++) {
         chksm += str.charCodeAt(i);
@@ -72,16 +79,8 @@ export function checksum(str: string) {
 
     chksm = chksm % 256;
 
-    let checksumstr = '';
-    if (chksm < 10) {
-        checksumstr = '00' + (chksm + '');
-    } else if (chksm >= 10 && chksm < 100) {
-        checksumstr = '0' + (chksm + '');
-    } else {
-        checksumstr = '' + (chksm + '');
-    }
-
-    return checksumstr;
+    // Phase 2: Optimize string formatting with padStart
+    return chksm.toString().padStart(3, '0');
 }
 
 /**
@@ -92,16 +91,25 @@ export function checksum(str: string) {
  * @returns key-value pairs, where key is a FIX tag. 
  * If object field name was unknown - returns this field as it was
  */
-export function convertFieldsToFixTags(instance: object): Record<any, unknown> {
-    const resultMap = new Map<any, unknown>();
+export function convertFieldsToFixTags(instance: object): FIXMessage {
+    const resultMap = new Map<number | string, unknown>();
     for (const [field, value] of Object.entries(instance)) {
-        let tag: number | null = null
-
-        try {
-            tag = keyvals[field as keyof typeof keyvals];
-            if (tag) resultMap.set(tag, value)
-        } catch (e) {
-            // nothing
+        // Check cache first (Phase 1 optimization)
+        let tag: number | null = fieldToTagCache.get(field) ?? null;
+        
+        if (tag === null && !fieldToTagCache.has(field)) {
+            // Not in cache, perform lookup
+            try {
+                tag = keyvals[field as keyof typeof keyvals];
+                // Cache the result (even if null)
+                fieldToTagCache.set(field, tag ?? null);
+                if (tag) resultMap.set(tag, value)
+            } catch (e) {
+                // Cache as not found
+                fieldToTagCache.set(field, null);
+            }
+        } else if (tag) {
+            resultMap.set(tag, value)
         }
 
         if (!tag) {
@@ -111,32 +119,34 @@ export function convertFieldsToFixTags(instance: object): Record<any, unknown> {
     }
 
     let result = Object.fromEntries(resultMap);
-    return result
+    return result as FIXMessage
 }
 
 export function convertMapToFIX(map: Record<number, unknown>) {
     return convertToFIX(
-        map,
+        map as FIXMessage,
         map[keyvals.BeginString],
         map[keyvals.SendingTime],
         map[keyvals.SenderCompID],
         map[keyvals.TargetCompID],
         map[keyvals.MsgSeqNum],
         {
-            senderSubID: map[keyvals.SenderSubID],
+            senderSubID: map[keyvals.SenderSubID] as string | undefined,
         },
     );
 }
 
-let grupToFix = (tag: string, item:any, bodymsgarr: Array<unknown>) => {
+// Phase 2: Already using array push pattern - optimized
+let grupToFix = (tag: string, item: FIXMessage[], bodymsgarr: Array<unknown>) => {
     bodymsgarr.push(tag, '=', item.length, SOHCHAR)
     for (const group of item) {
         if (repeatingGroups[tag]) {
             repeatingGroups[tag].forEach(x => {
-                if (Array.isArray(group[x])) {
-                    grupToFix(x, group[x], bodymsgarr)
-                } else if(group[x] !== undefined){
-                    bodymsgarr.push(x, '=', group[x], SOHCHAR)
+                const value = group[x]
+                if (Array.isArray(value)) {
+                    grupToFix(x, value as FIXMessage[], bodymsgarr)
+                } else if(value !== undefined){
+                    bodymsgarr.push(x, '=', value, SOHCHAR)
                 }
             })
         }
@@ -147,18 +157,13 @@ let grupToFix = (tag: string, item:any, bodymsgarr: Array<unknown>) => {
 }
 
 export function convertToFIX(
-    msg: Record<any, unknown>,
+    msg: FIXMessage,
     fixVersion: unknown,
     timeStamp: unknown,
     senderCompID: unknown,
     targetCompID: unknown,
     outgoingSeqNum: unknown,
-    options: {
-        readonly senderSubID?: unknown
-        readonly targetSubID?: unknown
-        readonly senderLocationID?: unknown
-        readonly appVerID?: unknown
-    },
+    options: FIXConversionOptions,
 ): string {
     //defensive copy
     delete msg[keyvals.BodyLength]; //bodylength
@@ -202,10 +207,11 @@ export function convertToFIX(
     
 
     for (const [tag, item] of Object.entries(msg)) {
-        const isBodyTag = headerFields[tag] !== true
+        const numTag = Number(tag)
+        const isBodyTag = headerFields[numTag] !== true
         
         if (Array.isArray(item)) {
-            grupToFix(tag, item, isBodyTag ? bodymsgarr: headermsgarr)
+            grupToFix(tag, item as FIXMessage[], isBodyTag ? bodymsgarr: headermsgarr)
         } else {
             (isBodyTag ? bodymsgarr : headermsgarr).push(tag, '=', item, SOHCHAR)
         }
@@ -227,23 +233,25 @@ export function convertToFIX(
     return outmsg;
 }
 
-function convertToKeyvals(msg: string, soh = SOHCHAR): Array<[any, unknown]> {
-    const keyvals: Array<[any, unknown]> = []
+function convertToKeyvals(msg: string, soh = SOHCHAR): FIXKeyValuePair[] {
+    const keyvals: FIXKeyValuePair[] = []
     let cursor = 0
 
     while (cursor < msg.length) {
         let i = cursor
         let attrLength = 0
-        let key: any | undefined
+        let key: string | undefined
         let value: unknown
         while (true) {
             if (key === undefined && msg[i] === '=') {
-                key = msg.substr(cursor, attrLength) as any
+                // Phase 1: Use slice instead of substr for better performance
+                key = msg.slice(cursor, cursor + attrLength)
                 attrLength = 0
                 cursor = i + 1
             }
             else if (msg[i] === soh || msg[i] === undefined) {
-                value = msg.substr(cursor, attrLength - 1)
+                // Phase 1: Use slice instead of substr for better performance
+                value = msg.slice(cursor, cursor + attrLength - 1)
                 cursor = i + 1
                 break;
             }
@@ -251,13 +259,12 @@ function convertToKeyvals(msg: string, soh = SOHCHAR): Array<[any, unknown]> {
             i++
         }
 
-        keyvals.push([key as any, value])
+        keyvals.push([key as string, value as string])
 
         if (key === '212') {
-            const xmlPair = ['213']
             const xmlLength = Number(value) + 5
-            xmlPair[1] = msg.slice(cursor + 4, cursor + xmlLength - 1)
-            keyvals.push(xmlPair as any)
+            const xmlValue = msg.slice(cursor + 4, cursor + xmlLength - 1)
+            keyvals.push(['213', xmlValue])
             cursor += xmlLength
         }
     }
@@ -265,21 +272,21 @@ function convertToKeyvals(msg: string, soh = SOHCHAR): Array<[any, unknown]> {
     return keyvals
 }
 
-export function convertToMap(msg: string) {
-    const fix: Record<number, unknown> = {}
+export function convertToMap(msg: string): FIXNumericMessage {
+    const fix: FIXNumericMessage = {}
     const msgKeyvals = convertToKeyvals(msg)
     let i = 0;
     while (i < msgKeyvals.length) {
         const pair = msgKeyvals[i]
         const repeatinGroup = repeatingGroups[pair[0]]
         if (!repeatinGroup) {
-            fix[pair[0] as unknown as number] = pair[1]
+            fix[pair[0] as unknown as number] = pair[1] as any
             i++
         } else {
             const nr = Number(pair[1])
             if (!isNaN(nr)) {
                 const response = repeatingGroupToMap(repeatinGroup, nr, msgKeyvals.slice(i + 1));
-                fix[pair[0] as unknown as number] = response.repeatingGroup
+                fix[pair[0] as unknown as number] = response.repeatingGroup as any
                 i += (1 + response.length)
             } else {
                 throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid')
@@ -290,8 +297,8 @@ export function convertToMap(msg: string) {
     return fix;
 }
 
-export function convertToJSON(msg: string): Record<any, unknown> {
-    const fix: Record<any, unknown> = {}
+export function convertToJSON(msg: string): FIXMessage {
+    const fix: FIXMessage = {}
     const msgKeyvals = convertToKeyvals(msg)
     let i = 0;
     while (i < msgKeyvals.length) {
@@ -299,13 +306,13 @@ export function convertToJSON(msg: string): Record<any, unknown> {
         const repeatingGroup = repeatingGroups[key]
         if (repeatingGroup === undefined) {
             const nr = Number(value)
-            fix[keyvals[key]] = !isNaN(nr) ? nr : value
+            fix[keyvals[key as any]] = !isNaN(nr) ? nr : value
             i++
         } else {
             const nr = Number(value)
             if (!isNaN(nr)) {
                 const response = repeatingGroupToJSON(repeatingGroup, nr, msgKeyvals.slice(i + 1))
-                fix[keyvals[key]] = response.repeatingGroup
+                fix[keyvals[key as any]] = response.repeatingGroup as any
                 i += (1 + response.length)
             } else {
                 throw new Error(`Repeating Group: "${key} = ${value}" is invalid`)
@@ -317,16 +324,17 @@ export function convertToJSON(msg: string): Record<any, unknown> {
 }
 
 function repeatingGroupToMap(
-    repeatinGroup: Array<any>,
+    repeatinGroup: string[],
     nr: number,
-    msgKeyvals: Array<[any, unknown]>,
-): {
-    readonly length: number;
-    readonly repeatingGroup: Array<Record<any, unknown>>;
-} {
+    msgKeyvals: FIXKeyValuePair[],
+): RepeatingGroupResult {
+    // Phase 1: Create Set for O(1) lookup instead of O(n) indexOf
+    const groupFieldsSet = new Set(repeatinGroup);
+    const firstField = repeatinGroup[0];
+    
     const response: {
         length: number;
-        repeatingGroup: Array<Record<any, unknown>>;
+        repeatingGroup: Array<FIXNumericMessage>;
     } = {
         repeatingGroup: [],
         length: 0
@@ -337,18 +345,20 @@ function repeatingGroupToMap(
         while (true) {
             if(k >= msgKeyvals.length) break
             const pair = msgKeyvals[k]
-            if (repeatinGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatinGroup[0] === msgKeyvals[k][0] && index !== 0)) {
+            const fieldKey = String(msgKeyvals[k][0]);
+            // Phase 1: Use Set.has() instead of indexOf for better performance
+            if (!groupFieldsSet.has(fieldKey) || (fieldKey === firstField && index !== 0)) {
                 break;
             } else {
                 const repeatinGroup = repeatingGroups[pair[0]]
                 if (!repeatinGroup) {
-                    group[pair[0] as unknown as number] = pair[1]
+                    group[pair[0] as unknown as number] = pair[1] as any
                     ++k
                 } else {
                     const nr = Number(pair[1])
                     if (!isNaN(nr)) {
                         const response = repeatingGroupToMap(repeatinGroup, nr, msgKeyvals.slice(k + 1));
-                        group[pair[0]] = response.repeatingGroup
+                        (group as any)[pair[0]] = response.repeatingGroup
                         k += (1 + response.length)
                     } else {
                         throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid')
@@ -365,16 +375,17 @@ function repeatingGroupToMap(
 }
 
 function repeatingGroupToJSON(
-    repeatingGroup: Array<any>,
+    repeatingGroup: string[],
     nr: number,
-    msgKeyvals: Array<[any, unknown]>,
-): {
-    readonly length: number;
-    readonly repeatingGroup: Array<Record<any, unknown>>;
-} {
+    msgKeyvals: FIXKeyValuePair[],
+): RepeatingGroupResult {
+    // Phase 1: Create Set for O(1) lookup instead of O(n) indexOf
+    const groupFieldsSet = new Set(repeatingGroup);
+    const firstField = repeatingGroup[0];
+    
     const response: {
         length: number;
-        repeatingGroup: Array<Record<any, unknown>>;
+        repeatingGroup: Array<FIXMessage>;
     } = {
         repeatingGroup: [],
         length: 0,
@@ -387,18 +398,20 @@ function repeatingGroupToJSON(
         while (true) {
             if(k >= msgKeyvals.length) break
             const pair = msgKeyvals[k]
-            if (repeatingGroup.indexOf(msgKeyvals[k][0]) === -1 || (repeatingGroup[0] === msgKeyvals[k][0] && index !== 0)) {
+            const fieldKey = String(msgKeyvals[k][0]);
+            // Phase 1: Use Set.has() instead of indexOf for better performance
+            if (!groupFieldsSet.has(fieldKey) || (fieldKey === firstField && index !== 0)) {
                 break;
             } else {
                 const repeatinGroup = repeatingGroups[pair[0]]
                 if (!repeatinGroup) {
-                    group[keyvals[pair[0]]] = pair[1]
+                    (group as any)[keyvals[pair[0] as any]] = pair[1]
                     ++k
                 } else {
                     const nr = Number(pair[1])
                     if (!isNaN(nr)) {
                         const response = repeatingGroupToJSON(repeatinGroup, nr, msgKeyvals.slice(k + 1));
-                        group[pair[0] as unknown as number] = response.repeatingGroup
+                        group[pair[0] as unknown as number] = response.repeatingGroup as any
                         k += (1 + response.length)
                     } else {
                         throw new Error('Repeating Group: "' + pair.join('=') + '" is invalid')
